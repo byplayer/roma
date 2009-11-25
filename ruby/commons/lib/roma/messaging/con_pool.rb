@@ -4,7 +4,7 @@ require 'singleton'
 
 module Roma
   module Messaging
-    
+
     class ConPool
       include Singleton
 
@@ -17,23 +17,14 @@ module Roma
       end
 
       def get_connection(ap)
-        ret = @pool[ap].shift if @pool.key?(ap) && @pool[ap].length > 0
-        ret = create_connection(ap) if ret == nil
+        ret = create_connection(ap)
         ret
       rescue
         nil
       end
 
       def return_connection(ap, con)
-        if @pool.key?(ap) && @pool[ap].length > 0
-          if @pool[ap].length > @maxlength
-            con.close
-          else
-            @pool[ap] << con
-          end
-        else
-          @pool[ap] = [con]
-        end
+        con.close
       rescue
       end
 
@@ -56,7 +47,7 @@ module Roma
           close_at(eap) if eap.split(/[:_]/)[0] == host
         }
       end
-      
+
       def close_at(ap)
         return unless @pool.key?(ap)
         @lock.synchronize {
