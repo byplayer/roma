@@ -16,7 +16,7 @@ module Roma #:nodoc:
         MINOR = 3
 
         # TINY version
-        TINY  = 7
+        TINY  = 6
 
         # バージョン文字列
         STRING = [MAJOR, MINOR, TINY].join('.')
