@@ -4,7 +4,7 @@ require 'singleton'
 
 module Roma
   module Messaging
-    
+
     class ConPool
       include Singleton
 
@@ -56,7 +56,7 @@ module Roma
           close_at(eap) if eap.split(/[:_]/)[0] == host
         }
       end
-      
+
       def close_at(ap)
         return unless @pool.key?(ap)
         @lock.synchronize {
@@ -69,6 +69,12 @@ module Roma
           end
           @pool.delete(ap)
         }
+      end
+
+      # reset_pool method is reset pool sockets .
+      # this method don't close socket, but only reset pool hash .
+      def reset_pool
+        @pool = {}
       end
 
     end # class ConPool
