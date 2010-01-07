@@ -12,6 +12,8 @@ require 'roma/logging/rlogger'
 require 'roma/command/receiver'
 require 'roma/messaging/con_pool'
 require 'roma/event/con_pool'
+require 'roma/event/handler'
+require 'roma/event/rsok_handler'
 require 'roma/routing/routing_data'
 require 'timeout'
 
@@ -56,18 +58,9 @@ module Roma
       @eventloop = true
       while(@eventloop)
         @eventloop = false
-        begin
-          EventMachine::run do
-            EventMachine.start_server('0.0.0.0', @stats.port, 
-                                      Roma::Command::Receiver,
-                                      @storages, @rttable)
 
-            @log.info("Now accepting connections on address #{@stats.address}, port #{@stats.port}")
-          end
-        rescue =>e
-          @log.error("#{e}\n#{$@}")
-          retry
-        end
+        start_rubysockethandler
+#        start_eventmachine
       end
       stop_async_process
       stop_wb_process
@@ -77,6 +70,24 @@ module Roma
     def daemon?; @stats.daemon; end
 
     private
+
+    def start_rubysockethandler
+      Roma::Event::RubySocketHandler::run('0.0.0.0', @stats.port,
+                             @storages, @rttable, @log)
+    end
+
+    def start_eventmachine
+      EventMachine::run do
+        EventMachine.start_server('0.0.0.0', @stats.port, 
+                                  Roma::Event::Handler,
+                                  @storages, @rttable)        
+        @log.info("Now accepting connections on address #{@stats.address}, port #{@stats.port}")
+      end
+    rescue =>e
+      @log.error("#{e}\n#{$@}")
+      retry
+    end
+
 
     def initialize_stats
       if Roma::Config.const_defined?(:REDUNDANT_ZREDUNDANT_SIZE)

@@ -10,32 +10,21 @@ module Roma
   module Event
 
     class Handler < EventMachine::Connection
-      @@ev_list={}
 
-      attr :stop_event_loop
+      attr_accessor :stop_event_loop
       attr :connected
       attr :fiber
       attr :rbuf
 
-      attr :storages
-      attr :rttable
       attr_accessor :timeout
       attr_reader :lastcmd
 
       def initialize(storages, rttable)
         @rbuf=''
-        unless has_event?
-          public_methods.each{|m|
-            if m.to_s.start_with?('ev_')
-              add_event(m.to_s[3..-1],m)
-            end
-          }
-        end
-
-        @storages = storages
-        @rttable = rttable
         @timeout = 10
         @log = Roma::Logging::RLogger.instance
+
+        @receiver = Roma::Command::Receiver.new(self, storages, rttable)
       end
 
       def post_init
@@ -61,22 +50,6 @@ module Roma
         @log.warn("#{__FILE__}:#{__LINE__}:#{@addr[1]}:#{@addr[0]} #{e.inspect} #{$@}")
       end
 
-      protected
-
-      def has_event?
-        @@ev_list.length!=0
-      end
-
-      def add_event(c,m)
-        @@ev_list[c]=m
-      end
-
-      def exit
-        EventMachine::stop_event_loop
-      end
-
-      private
-
       def get_connection(ap)
         con=Roma::Event::EMConPool::instance.get_connection(ap)
         con.fiber=@fiber
@@ -91,13 +64,13 @@ module Roma
         while(@connected) do
           next unless s=gets
           s=s.chomp.split(/ /)
-          if s[0] && @@ev_list.key?(s[0].downcase)
-            send(@@ev_list[s[0].downcase],s)
+          if s[0] && @receiver.ev_list.key?(s[0].downcase)
+            @receiver.send(@receiver.ev_list[s[0].downcase],s)
             @lastcmd=s
           elsif s.length==0
             next
           elsif s[0]=='!!'
-            send(@@ev_list[@lastcmd[0].downcase],@lastcmd)
+            @receiver.send(@receiver.ev_list[@lastcmd[0].downcase],@lastcmd)
           else
             @log.warn("command error:#{s}")
             send_data("ERROR\r\n")
@@ -149,10 +122,6 @@ module Roma
         nil
       end
 
-      def detach_socket
-        @connected = false
-        Socket::for_fd(detach)
-      end
     end
 
   end
