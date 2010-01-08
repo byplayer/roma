@@ -1,7 +1,6 @@
 #
 # Ruby socket handler
 #
-# require 'socket'
 require 'roma/messaging/con_pool'
 
 module Roma
@@ -10,85 +9,68 @@ module Roma
     class RubySocketHandler
       
       def self.run(addr, port, storages, rttable, log)
-        serv = TCPServer.new(port)
+        serv = TCPServer.new(addr, port)
                            
         event_loop = true
         while(event_loop)
-          begin
-            sleep 0.01
-            sok, sockaddr = serv.accept_nonblock
+          next unless select([serv],[],[],0.1)
+          sok = serv.accept
           
-            if(sok)
-              log.debug("accept!!")
-              Thread.new {
-                session = RubySocketSession.new(sok)
-                receiver = Roma::Command::Receiver.new(session, storages, rttable)
-
-                while(event_loop)
-                  begin
-                    select([sok])
-                    s = sok.gets
-                    s = s.chomp.split(/ /)
-                    if s[0] && receiver.ev_list.key?(s[0].downcase)
-                      log.debug(s[0].downcase)
-                      receiver.send(receiver.ev_list[s[0].downcase],s)
-                      #                    @lastcmd=s
-                    elsif s.length==0
-                      next
-                      #                  elsif s[0]=='!!'
-                      #                    receiver.send(receiver.ev_list[@lastcmd[0].downcase],@lastcmd)
-                    else
-                      log.warn("command error:#{s}")
-                      sok.write("ERROR\r\n")
-                      sok.close
-                    end
-
-                    event_loop = false if session.stop_event_loop
-                  rescue =>e
-                    log.error("#{e}")
-                  end
+          Thread.new {
+            session = RubySocketSession.new(sok)
+            log.info("Connected from #{session.addr[1]}:#{session.addr[0]}") 
+            receiver = Roma::Command::Receiver.new(session, storages, rttable)
+              
+            lastcmd = nil
+            while(event_loop && !session.close?)
+              begin
+                s = session.gets
+                break if s == nil # if a closed socket by client.
+                
+                s = s.chomp.split(/ /)
+                if s[0] && receiver.ev_list.key?(s[0].downcase)
+#log.debug(s[0].downcase)
+                  receiver.send(receiver.ev_list[s[0].downcase],s)
+                  lastcmd=s
+                elsif s.length==0
+                  next # wait a next command
+                elsif s[0]=='!!' && lastcmd
+                  session.send_data(lastcmd.join(' ')+"\r\n") # command echo
+                  receiver.send(receiver.ev_list[lastcmd[0].downcase],lastcmd)
+                else # command error
+                  log.warn("command error:#{s}")
+                  session.send_data("ERROR\r\n")
+                  break
                 end
-              }
+
+                # check the balse command received. 
+                event_loop = false if session.stop_event_loop
+              rescue IOError
+                log.error("#{e.inspect}")
+                break # session close for IOError.
+              rescue =>e
+                log.error("#{e.inspect}")
+              end
             end
-          rescue Errno::EAGAIN
-          end
+
+            session.close
+            log.info("Disconnected from #{session.addr[1]}:#{session.addr[0]}")
+          }
         end
 
       end
 
-      def self.dispatcher
-        while(@connected) do
-          next unless s=gets
-          s=s.chomp.split(/ /)
-          if s[0] && @receiver.ev_list.key?(s[0].downcase)
-            @receiver.send(@receiver.ev_list[s[0].downcase],s)
-            @lastcmd=s
-          elsif s.length==0
-            next
-          elsif s[0]=='!!'
-            @receiver.send(@receiver.ev_list[@lastcmd[0].downcase],@lastcmd)
-          else
-            @log.warn("command error:#{s}")
-            send_data("ERROR\r\n")
-            close_connection_after_writing
-          end
-        end
-      rescue =>e
-        @log.warn("#{__FILE__}:#{__LINE__}:#{@addr[1]}:#{@addr[0]} #{e} #{$@}")
-        close_connection
-      end
-
-
-
-    end
+    end # class RubySocketHandler
 
     class RubySocketSession
-      
+      attr_reader :addr
+      attr_reader :sok
       attr_accessor :stop_event_loop
       
       def initialize(sok)
         @sok = sok
         @stop_event_loop = false
+        @addr = Socket.unpack_sockaddr_in(@sok.getpeername)
       end
 
       def get_connection(ap)
@@ -100,29 +82,42 @@ module Roma
       end
 
       def send_data(s)
+        throw IOError.new("session was closed") unless @sok
         @sok.write(s)
       end
 
       def gets
+        nil unless @sok
         select([@sok])
         @sok.gets
       end
 
       def read_bytes(size, mult = 1)
+        nil unless @sok
         ret = ''
         begin
           select([@sok])
-          ret << @sok.readpartial(size - ret.length)
+          ret << @sok.read(size - ret.length)
         end while(ret.length != size)
         ret
       end
 
       def close_connection_after_writing
-        @sok.close
+        if @sok
+          @sok.close
+          @sok = nil
+        end
       end
 
+      def close
+        @sok.close if @sok
+      end
 
-    end
+      def close?
+        @sok == nil
+      end
 
-  end # Event
-end # Roam
+    end # class RubySocketSession
+
+  end # module Event
+end # module Roam
