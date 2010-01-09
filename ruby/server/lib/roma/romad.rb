@@ -59,7 +59,8 @@ module Roma
       while(@eventloop)
         @eventloop = false
 
-        start_rubysockethandler
+#        start_rubysockethandler
+        start_rubysockethandler2
 #        start_eventmachine
       end
       stop_async_process
@@ -74,6 +75,11 @@ module Roma
     def start_rubysockethandler
       Roma::Event::RubySocketHandler::run('0.0.0.0', @stats.port,
                              @storages, @rttable, @log)
+    end
+
+    def start_rubysockethandler2
+      h =  Roma::Event::RubySocketHandler2.new('0.0.0.0', @stats.port,@storages, @rttable, @log)
+      h.run
     end
 
     def start_eventmachine
