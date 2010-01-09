@@ -77,6 +77,9 @@ module Roma
         @rttable = rttable
         @log = log
         @session_pool = {}
+        @receiver_pool = {}
+        @keys = {}
+        @queue = []
       end
 
       def run
@@ -85,29 +88,51 @@ module Roma
         @reads = [serv]
         @event_loop = true
         while(@event_loop)
+          sock,cmds = @queue.shift
+          if sock
+            unless @keys.key?(cmds[1])
+              @keys[cmds[1]] = [sock,cmds]
+              exec(sock,cmds)
+            else
+              @queue.push [sock,cmds]
+            end            
+          end
+@log.debug("queue = #{@queue.inspect}") if @queue.length > 0
           next unless s = select(@reads,[],[],0.1)
           s[0].each{|sock|
             if sock==serv
-              @reads << sock.accept # append a new socket
+              open_session(sock)
               next
             end
             
             begin
               cmd = sock.gets # receive a first line in memcached command.
               unless cmd
-                close_connection(sock)
+                close_session(sock)
                 next
               end
 
               cmds = cmd.chomp.split(/ /) # parse a command
               next if cmds.length==0
 
-              @reads.delete(sock)
-              exec(sock,cmds)
+              
+              if cmds[0]=="set"
+                unless @keys.key?(cmds[1])
+                  @keys[cmds[1]] = [sock,cmds]
+                  @reads.delete(sock)
+                  exec(sock,cmds)
+                else
+                  @reads.delete(sock)
+                  @queue.push [sock,cmds]
+                end
+              else
+                @reads.delete(sock)
+                exec(sock,cmds)
+              end
 
-            rescue IOError
-              log.error("#{e.inspect}")
-              close_connection(sock)
+            rescue Errno::ECONNRESET, IOError => e
+              @log.error("#{e.inspect}")
+              close_session(sock)
             end
           }
         end
@@ -115,29 +140,34 @@ module Roma
         @reads.each{ |s| s.close }
       end
 
-      def close_connection(sock)
+      def open_session(sock)
+        session = RubySocketSession.new(sock.accept)
+        @session_pool[session.sock] = session
+        receiver = Roma::Command::Receiver.new(session, @storages, @rttable)
+        @receiver_pool[session.sock] = receiver
+        @reads << session.sock # append a new socket
+        @log.info("Connected from #{session.addr[1]}:#{session.addr[0]} reads.len=#{@reads.length}")
+      end
+
+      def close_session(sock)
         @reads.delete(sock)
+        receiver = @receiver_pool[sock]
+        if receiver
+          @receiver_pool.delete(sock)
+        end
         session = @session_pool[sock]
         if session
           @session_pool.delete(sock)
-          @log.info("Disconnected from #{session.addr[1]}:#{session.addr[0]}")
+          @log.info("Disconnected from #{session.addr[1]}:#{session.addr[0]} reads.len=#{@reads.length}")
+          session.close
         else
           @log.info("Disconnected #{sock}")
         end
       end
 
       def exec(sock, cmds)
-        session = nil
-        if @session_pool.key?(sock)
-          session = @session_pool[sock]
-          @session_pool.delete(sock)
-        else
-          session = RubySocketSession.new(sock)
-        end
-
-        @log.info("Connected from #{session.addr[1]}:#{session.addr[0]}") 
-        receiver = Roma::Command::Receiver.new(session, @storages, @rttable)
-
+        session = @session_pool[sock]
+        receiver = @receiver_pool[sock]
 
         if cmds[0] && receiver.ev_list.key?(cmds[0].downcase)
           invok_cmd(receiver, session, cmds)
@@ -147,7 +177,7 @@ module Roma
         else # command error
           @log.warn("command error:#{cmds.inspect}")
           session.send_data("ERROR\r\n")
-          session.close
+          close_session(session.sock)
         end
 
       end
@@ -155,18 +185,23 @@ module Roma
       def invok_cmd(receiver, session, cmds)
 # @log.debug(cmds[0].downcase)
         Thread.new{
-          receiver.send(receiver.ev_list[cmds[0].downcase],cmds)
-          session.last_cmd = cmds
+          begin
+            receiver.send(receiver.ev_list[cmds[0].downcase],cmds)
+            
+            @keys.delete(cmds[1]) if cmds[0]=="set"
 
-          # check the balse command received. 
-          if session.stop_event_loop
-            @event_loop = false
-            session.close
-          end
+            session.last_cmd = cmds
 
-          unless session.close?
-            @session_pool[session.sock] = session
-            @reads << session.sock
+            # check the balse command received. 
+            if session.stop_event_loop
+              @event_loop = false
+              close_session(session.sock)
+            end
+
+            @reads << session.sock unless session.close?
+          rescue => e
+            @log.error("#{e}\n#{$@}")
+            close_session(session.sock)
           end
         }
       end
@@ -184,6 +219,7 @@ module Roma
         @stop_event_loop = false
         @addr = Socket.unpack_sockaddr_in(@sock.getpeername)
         @last_cmd = nil
+        @closed = false
       end
 
       def get_connection(ap)
@@ -195,18 +231,18 @@ module Roma
       end
 
       def send_data(s)
-        throw IOError.new("session was closed") unless @sock
+        throw IOError.new("session was closed") if @closed
         @sock.write(s)
       end
 
       def gets
-        nil unless @sock
+        nil if @closed
         select([@sock])
         @sock.gets
       end
 
       def read_bytes(size, mult = 1)
-        nil unless @sock
+        nil if @closed
         ret = ''
         begin
           select([@sock])
@@ -216,18 +252,18 @@ module Roma
       end
 
       def close_connection_after_writing
-        if @sock
-          @sock.close
-          @sock = nil
-        end
+        close
       end
 
       def close
-        @sock.close if @sock
+        unless @closed
+          @closed = true
+          @sock.close
+        end
       end
 
       def close?
-        @sock == nil
+        @closed
       end
 
     end # class RubySocketSession
