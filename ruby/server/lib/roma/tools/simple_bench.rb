@@ -54,4 +54,4 @@ tn.times{
     random_rquest_sender(ARGV)
   }
 }
-
+t[0].join if t.length > 0
