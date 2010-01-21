@@ -104,9 +104,13 @@ module Roma
               open_session(sock)
               next
             end
-            
+# @log.debug("selsct #{s[0].length}")
             begin
-              cmd = sock.gets # receive a first line in memcached command.
+              sess = @session_pool[sock]
+# @log.debug("sess #{sess}")
+              cmd = sess.gets_firstline
+              # cmd = sock.gets # receive a first line in memcached command.
+# @log.debug("command=#{cmd}")
               unless cmd
                 close_session(sock)
                 next
@@ -115,7 +119,6 @@ module Roma
               cmds = cmd.chomp.split(/ /) # parse a command
               next if cmds.length==0
 
-              
               if cmds[0]=="set"
                 unless @keys.key?(cmds[1])
                   @keys[cmds[1]] = [sock,cmds]
@@ -220,6 +223,7 @@ module Roma
         @addr = Socket.unpack_sockaddr_in(@sock.getpeername)
         @last_cmd = nil
         @closed = false
+        @cmd = nil
       end
 
       def get_connection(ap)
@@ -235,15 +239,46 @@ module Roma
         @sock.write(s)
       end
 
+      def gets_firstline
+        c = @sock.read_nonblock(1024)
+        return nil if c == nil
+        return '' if c.length == 0
+        if @cmd
+          @cmd << c
+        else
+          @cmd = c
+        end
+        ret = @cmd.slice!(/^.*\r\n/)
+        return ret if ret
+        ''
+      end
+
       def gets
-        nil if @closed
-        select([@sock])
-        @sock.gets
+        if @cmd
+          ret = @cmd.slice!(/^.*\r\n/)
+          return ret if ret
+          return @cmd + @sock.gets
+        else
+          nil if @closed
+          select([@sock])
+          @sock.gets
+        end
       end
 
       def read_bytes(size, mult = 1)
         nil if @closed
         ret = ''
+        if @cmd
+          if @cmd.length >= size
+            ret = @cmd[0..size-1]
+            @cmd = @cmd[size..-1]
+            return ret
+          else
+            ret = @cmd
+            @cmd = nil
+          end
+        end
+
         begin
           select([@sock])
           ret << @sock.read(size - ret.length)
