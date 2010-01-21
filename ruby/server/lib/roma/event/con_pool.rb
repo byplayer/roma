@@ -32,7 +32,7 @@ module Roma
         Roma::Logging::RLogger.instance.warn("#{__FILE__}:#{__LINE__}:#{e.inspect} #{$@}")
       end
 
-      def send(data)
+      def write(data)
         send_data(data)
       end
 

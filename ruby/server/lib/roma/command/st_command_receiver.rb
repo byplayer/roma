@@ -357,7 +357,7 @@ module Roma
 
       def forward_get(nid, k, d)
         con = get_connection(nid)
-        con.send("fget #{k}\r\n")
+        con.write("fget #{k}\r\n")
         res = con.gets
         return res if res == "END\r\n" || res =~ /$SERVER_ERROR/
         s = res.split(/ /)
@@ -374,7 +374,7 @@ module Roma
 
       def forward_gets(nid, keys)
         con = get_connection(nid)
-        con.send("gets #{keys.join(' ')}\r\n")
+        con.write("gets #{keys.join(' ')}\r\n")
         res = {}
         while((line = con.gets)!="END\r\n")
           s = line.chomp.split(/ /)

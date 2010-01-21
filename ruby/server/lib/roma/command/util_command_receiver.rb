@@ -7,7 +7,7 @@ module Roma
 
       def send_cmd(nid, cmd)
         con = get_connection(nid)
-        con.send(cmd)
+        con.write(cmd)
         res = con.gets
         if res
           res.chomp!

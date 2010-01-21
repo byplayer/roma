@@ -4,9 +4,19 @@ require 'singleton'
 
 module Roma
   module Messaging
-    
     class ConPool
       include Singleton
+
+      module SocketUtil
+        def read_bytes(size)
+          ret = ''
+          begin
+            select([self])
+            ret << self.read(size - ret.length)
+          end while(ret.length != size)
+          ret
+        end
+      end
 
       attr_accessor :maxlength
 
@@ -39,7 +49,9 @@ module Roma
 
       def create_connection(ap)
         addr, port = ap.split(/[:_]/)
-        TCPSocket.new(addr, port)
+        con = TCPSocket.new(addr, port)
+        con.extend(SocketUtil)
+        con
       end
 
       def delete_connection(ap)

@@ -1307,7 +1307,7 @@ module Roma
         end
         
         con = get_connection(nid)
-        con.send(buf)
+        con.write(buf)
 
         res = ''
         while (buf = con.gets)!="END\r\n"
