@@ -1,11 +1,14 @@
 #
 # Ruby socket handler
 #
+require 'roma/command/receiver'
 require 'roma/messaging/con_pool'
+require 'roma/logging/rlogger'
 
 module Roma
   module Event
     
+
     #
     # receive a first line in memcached command in a command execution thread model.
     #
@@ -69,7 +72,10 @@ module Roma
     # receive a first line in memcached command in the event loop model.
     #
     class RubySocketHandler2
-      
+      attr_writer :event_loop
+
+      @@obj = nil
+
       def initialize(addr, port, storages, rttable, log)
         @addr = addr
         @port = port
@@ -82,9 +88,40 @@ module Roma
         @queue = []
       end
 
+      def self.start(addr, port, storages, rttable, stats, log)
+        if stats.verbose
+          Roma::Event::RubySocketSession.class_eval{
+            alias gets_firstline2 gets_firstline
+            undef gets_firstline
+
+            def gets_firstline
+              ret = gets_firstline2
+              @log.info("command log:#{ret.chomp}") if ret
+              ret
+            end
+          }
+        end
+
+        @@obj =  Roma::Event::RubySocketHandler2.new(addr, port, storages, rttable, log)
+        @@obj.run
+      end
+
+      def self.stop
+        @@obj.event_loop = false
+      end
+
+      def self.close_conpool(nid)
+        Roma::Messaging::ConPool.instance.close_same_host(nid)
+      end
+
+      def self.receiver_class
+        Roma::Command::Receiver
+      end
+
       def run
         serv = TCPServer.new(@addr, @port)
-                         
+        @log.info("Now accepting connections on address #{@addr}, port #{@port} in the RubySocketHandler2.")
+
         @reads = [serv]
         @event_loop = true
         while(@event_loop)
@@ -108,8 +145,7 @@ module Roma
             begin
               sess = @session_pool[sock]
 # @log.debug("sess #{sess}")
-              cmd = sess.gets_firstline
-              # cmd = sock.gets # receive a first line in memcached command.
+              cmd = sess.gets_firstline # receive a first line in memcached command.
 # @log.debug("command=#{cmd}")
               unless cmd
                 close_session(sock)
@@ -224,6 +260,7 @@ module Roma
         @last_cmd = nil
         @closed = false
         @cmd = nil
+        @log = Roma::Logging::RLogger.instance
       end
 
       def get_connection(ap)

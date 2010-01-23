@@ -1,6 +1,8 @@
 require 'roma/routing/rttable'
 require 'roma/routing/cb_rttable'
 require 'roma/storage/rh_storage'
+require 'roma/event/handler'
+require 'roma/event/rsok_handler'
 
 module Roma
   
@@ -17,6 +19,10 @@ module Roma
     LOG_PATH = '.'
     # :debug | :info | :warn | :error
     LOG_LEVEL = :debug
+
+    # network event handler setting
+#    HANDLER_CLASS = Roma::Event::RubySocketHandler2
+    HANDLER_CLASS = Roma::Event::Handler
 
     # routing setting
     RTTABLE_PATH = '.'

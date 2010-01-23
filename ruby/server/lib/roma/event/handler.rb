@@ -2,7 +2,9 @@
 # File: handler.rb
 #
 require 'eventmachine'
+require 'roma/command/receiver'
 require 'roma/event/con_pool'
+require 'roma/messaging/con_pool'
 require 'roma/logging/rlogger'
 require 'socket'
 
@@ -25,6 +27,39 @@ module Roma
         @log = Roma::Logging::RLogger.instance
 
         @receiver = Roma::Command::Receiver.new(self, storages, rttable)
+      end
+
+      def self.start(addr, port, storages, rttable, stats, log)
+        if stats.verbose
+          Roma::Event::Handler.class_eval{
+            alias gets2 gets
+            undef gets
+        
+            def gets
+              ret = gets2
+              @log.info("command log:#{ret.chomp}") if ret
+              ret
+            end
+          }
+        end
+
+        EventMachine::run do
+          EventMachine.start_server(addr, port, Roma::Event::Handler, storages, rttable)        
+          log.info("Now accepting connections on address #{stats.address}, port #{stats.port} in the eventmachine-handler.")
+        end
+      end
+
+      def self.stop
+        EventMachine::stop_event_loop
+      end
+
+      def self.close_conpool(nid)
+        Roma::Event::EMConPool.instance.close_same_host(nid)
+        Roma::Messaging::ConPool.instance.close_same_host(nid)
+      end
+
+      def self.receiver_class
+        Roma::Command::Receiver
       end
 
       def post_init

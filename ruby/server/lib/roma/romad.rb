@@ -9,9 +9,7 @@ require 'roma/command_plugin'
 require 'roma/async_process'
 require 'roma/write_behind'
 require 'roma/logging/rlogger'
-require 'roma/command/receiver'
 require 'roma/messaging/con_pool'
-require 'roma/event/con_pool'
 require 'roma/event/handler'
 require 'roma/event/rsok_handler'
 require 'roma/routing/routing_data'
@@ -36,7 +34,6 @@ module Roma
       initialize_logger
       initialize_rttable
       initialize_storages
-      initialize_handler
       initialize_plugin
       initialize_wb_witer
     end
@@ -53,16 +50,9 @@ module Roma
       
       start_async_process
       start_wb_process
-      timer
+      start_timer
+      start_network_event
 
-      @eventloop = true
-      while(@eventloop)
-        @eventloop = false
-
-#        start_rubysockethandler
-        start_rubysockethandler2
-#        start_eventmachine
-      end
       stop_async_process
       stop_wb_process
       stop
@@ -72,28 +62,18 @@ module Roma
 
     private
 
-    def start_rubysockethandler
-      Roma::Event::RubySocketHandler::run('0.0.0.0', @stats.port,
-                             @storages, @rttable, @log)
-    end
-
-    def start_rubysockethandler2
-      h =  Roma::Event::RubySocketHandler2.new('0.0.0.0', @stats.port,@storages, @rttable, @log)
-      h.run
-    end
-
-    def start_eventmachine
-      EventMachine::run do
-        EventMachine.start_server('0.0.0.0', @stats.port, 
-                                  Roma::Event::Handler,
-                                  @storages, @rttable)        
-        @log.info("Now accepting connections on address #{@stats.address}, port #{@stats.port}")
+    def start_network_event
+      @eventloop = true
+      while(@eventloop)
+        @eventloop = false
+        begin
+          Roma::Config::HANDLER_CLASS::start('0.0.0.0', @stats.port, @storages, @rttable, @stats, @log)
+        rescue =>e
+          @log.error("#{e}\n#{$@}")
+          retry
+        end
       end
-    rescue =>e
-      @log.error("#{e}\n#{$@}")
-      retry
     end
-
 
     def initialize_stats
       if Roma::Config.const_defined?(:REDUNDANT_ZREDUNDANT_SIZE)
@@ -115,27 +95,13 @@ module Roma
         require "roma/plugin/#{f}"
         @log.info("roma/plugin/#{f} loaded")
       end
+
       Roma::CommandPlugin.plugins.each do|plugin|
-          Roma::Command::Receiver.class_eval do
-            include plugin
-          end
-          @log.info("#{plugin.to_s} included")
-      end
-    end
-
-    def initialize_handler
-      return if @stats.verbose==false
-
-      Roma::Event::Handler.class_eval{
-        alias gets2 gets
-        undef gets
-        
-        def gets
-          ret = gets2
-          @log.info("command log:#{ret.chomp}") if ret
-          ret
+        Roma::Config::HANDLER_CLASS::receiver_class.class_eval do
+          include plugin
         end
-      }
+        @log.info("#{plugin.to_s} included")
+      end
     end
 
     def initialize_logger
@@ -273,14 +239,13 @@ module Roma
       @rttable.lost_action = Roma::Config::DEFAULT_LOST_ACTION
       @rttable.enabled_failover = @stats.start_with_failover
       @rttable.set_leave_proc{|nid|
-        Roma::Messaging::ConPool.instance.close_same_host(nid)
-        Roma::Event::EMConPool.instance.close_same_host(nid)
+        Roma::Config::HANDLER_CLASS::close_conpool(nid)
         Roma::AsyncProcess::queue.push(Roma::AsyncMessage.new('broadcast_cmd',["leave #{nid}",[@stats.ap_str,nid,5]]))
       }
       @rttable.set_lost_proc{
         if @rttable.lost_action == :shutdown
           async_broadcast_cmd("rbalse lose_data\r\n")
-          EventMachine::stop_event_loop
+          Roma::Config::HANDLER_CLASS::stop
           @log.error("Romad has stopped, so that lose data.")
         end
       }
@@ -354,7 +319,7 @@ module Roma
       end
     end
 
-    def timer
+    def start_timer
       Thread.new do
         loop do
           sleep 1
@@ -456,7 +421,7 @@ module Roma
       idx=nodes.index(@stats.ap_str)
       unless idx
         @log.error("My node-id(=#{@stats.ap_str}) dose not found in the routingtable.")
-        EventMachine::stop_event_loop
+        Roma::Config::HANDLER_CLASS::stop
         return
       end
       Thread.new{
