@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 #
+require 'rubygems'
 require 'optparse'
 require 'roma/config'
 require 'roma/version'
@@ -10,7 +11,7 @@ require 'roma/async_process'
 require 'roma/write_behind'
 require 'roma/logging/rlogger'
 require 'roma/messaging/con_pool'
-require 'roma/event/handler'
+#require 'roma/event/handler'
 require 'roma/event/rsok_handler'
 require 'roma/routing/routing_data'
 require 'timeout'
