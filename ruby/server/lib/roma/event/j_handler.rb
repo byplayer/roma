@@ -1,10 +1,111 @@
 require 'java'
-require 'jar/rakuten-ROMA-java-server-0.1.0-jar-with-dependencies.jar'
+require 'jar/ROMA-java-server-0.1.0-jar-with-dependencies.jar'
+
+require 'roma/stats'
+require 'roma/version'
+require 'roma/messaging/con_pool'
+require 'roma/command/sys_command_receiver'
+require 'roma/command/bg_command_receiver'
+require 'roma/command/rt_command_receiver'
+require 'roma/command/st_command_receiver'
+require 'roma/command/util_command_receiver'
+require 'roma/command/mh_command_receiver'
 
 module Roma
   module Event
-    
-    class JavaEventHandler < Java::jp.co.rakuten.rit.roma.event.EventHandler
+
+    class JavaRecvFactory < Java::jp.co.rakuten.rit.roma.event.ReceiverFactory
+      attr_accessor :storages
+      attr_accessor :rttable
+      attr_accessor :stats
+      attr_accessor :log
+
+      def initialize(storages, rttable, stats, log)
+				super()
+        @storages = storages
+        @rttable = rttable
+        @stats = stats
+        @log = log
+      end
+
+      def initReceiver sess
+        Roma::Event::JavaReceiver.new sess
+      end
+
+      def postReceiverInit recv
+        recv.postInit
+        recv.storages = @storages
+        recv.rttable = @rttable
+        recv.stats = @stats
+        recv.log = @log
+      end
+    end
+
+    class JavaReceiver < Java::jp.co.rakuten.rit.roma.event.Receiver
+      @@ev_list={}
+
+      include Roma::Command::SystemCommandReceiver
+      include Roma::Command::BackgroundCommandReceiver
+      include Roma::Command::RoutingCommandReceiver
+      include Roma::Command::StorageCommandReceiver
+      include Roma::Command::UtilCommandReceiver
+      include Roma::Command::MultiHashCommandReceiver
+
+      attr_accessor :storages
+      attr_accessor :rttable
+      attr_accessor :stats
+      attr_accessor :log
+
+      def postInit
+        unless has_event?
+          public_methods.each{ |m|
+            if m.to_s.start_with?('ev_')
+              add_event(m.to_s[3..-1], m)
+            end
+          }
+        end
+      end
+
+      def has_event?
+        @@ev_list.length != 0
+      end
+
+      def add_event(c, m)
+        @@ev_list[c] = m
+      end
+
+      def ev_list
+        @@ev_list
+      end
+
+      def execCommand cmds
+        s = []
+        cmds.each{ |cmd|
+          puts "cmd: #{cmd}"
+          s << cmd
+        }
+        self.send(ev_list[s[0].downcase], s)
+      end
+
+      def send_data s
+        writeString s
+      end
+
+      def read_bytes len
+        readBytes len
+      end
+
+      def get_connection(ap)
+        Roma::Messaging::ConPool.instance.get_connection(ap)
+      end
+
+      def return_connection(ap,con)
+        Roma::Messaging::ConPool.instance.return_connection(ap, con)
+      end
+
+    end
+
+    class JavaHandler < Java::jp.co.rakuten.rit.roma.event.Handler
  
       def self.start(addr, port, storages, rttable, stats, log)
         if stats.verbose
@@ -19,12 +120,12 @@ module Roma
           }
         end
 
-        fact = Roma::Command::JavaReceiverFactory.new
-        JavaEventHandler::run(host, port, fact)
+        fact = JavaRecvFactory.new(storages, rttable, stats, log)
+        JavaHandler::run(addr, port.to_i, fact)
       end
 
       def self.stop
-#        JavaEventHandler::stop
+        JavaHandler::stop
       end
 
       def self.close_conpool(nid)
@@ -32,10 +133,10 @@ module Roma
       end
 
       def self.receiver_class
-#        Roma::Command::JavaReceiver
+        Roma::Event::JavaReceiver
       end
 
-    end # class JavaEventHandler < Java::jp.co.rakuten.rit.roma.event.EventHandler
+    end # class JavaHandler < Java::jp.co.rakuten.rit.roma.event.Handler
 
     class JavaSocketSession < Java::jp.co.rakuten.rit.roma.event.Session
 
@@ -46,4 +147,4 @@ module Roma
     end
 
   end # module Event
-end # module Roam
+end # module Roma
