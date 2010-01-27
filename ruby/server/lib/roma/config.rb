@@ -6,7 +6,7 @@ require 'roma/event/rsok_handler'
 require 'roma/event/j_handler'
 
 module Roma
-  
+
   module Config
     DEFAULT_PORT = 12000
     DEFAULT_NAME = 'ROMA'
@@ -23,6 +23,7 @@ module Roma
 
     # network event handler setting
     # HANDLER_CLASS = Roma::Event::Handler
+    # HANDLER_CLASS = Roma::Event::RubySocketHandler2
     HANDLER_CLASS = Roma::Event::JavaHandler
 
     # routing setting

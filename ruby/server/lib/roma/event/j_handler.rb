@@ -84,6 +84,7 @@ module Roma
           puts "cmd: #{cmd}"
           s << cmd
         }
+        puts "command name: #{ev_list[s[0].downcase]}"
         self.send(ev_list[s[0].downcase], s)
       end
 
