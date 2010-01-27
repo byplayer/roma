@@ -297,7 +297,6 @@ module Roma
           return @cmd + @sock.gets
         else
           nil if @closed
-          select([@sock])
           @sock.gets
         end
       end
@@ -317,7 +316,6 @@ module Roma
         end
 
         begin
-          select([@sock])
           ret << @sock.read(size - ret.length)
         end while(ret.length != size)
         ret
