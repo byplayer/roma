@@ -37,6 +37,8 @@ module Roma
         recv.storages = @storages
         recv.rttable = @rttable
         recv.stats = @stats
+        recv.nid = @stats.ap_str
+        recv.defhash = 'roma'
         recv.log = @log
       end
     end
@@ -50,10 +52,12 @@ module Roma
       include Roma::Command::StorageCommandReceiver
       include Roma::Command::UtilCommandReceiver
       include Roma::Command::MultiHashCommandReceiver
-
+      
       attr_accessor :storages
       attr_accessor :rttable
       attr_accessor :stats
+      attr_accessor :nid
+      attr_accessor :defhash
       attr_accessor :log
 
       def postInit

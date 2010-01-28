@@ -106,7 +106,7 @@ module Roma
       def unpack_header(str)
         str.unpack(PACK_HEADER_TEMPLATE)
       end
-      def pack_data(vn, physical_clock, logical_clock, expire,value)
+      def pack_data(vn, physical_clock, logical_clock, expire, value)
         [vn,physical_clock, logical_clock, expire, value].pack(PACK_TEMPLATE)
       end
       def unpack_data(str)
