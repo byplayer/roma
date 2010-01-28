@@ -118,7 +118,7 @@ module Roma
       def return_connection(ap,con)
         Roma::Messaging::ConPool.instance.return_connection(ap, con)
       end
-      
+
       def close_connection_after_writing
         sess = getSession
         sess.close
