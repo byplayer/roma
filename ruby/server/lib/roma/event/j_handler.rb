@@ -97,7 +97,18 @@ module Roma
       end
 
       def read_bytes len
-        readBytes len
+        bytes = readBytes len
+        String.from_java_bytes bytes
+      end
+      
+      def gets
+        blockingReadLine
+      end
+
+      def stop_event_loop
+        puts "$$$ 2"
+        stopEventLoop
+        puts "$$$ 3"
       end
 
       def get_connection(ap)
@@ -107,7 +118,12 @@ module Roma
       def return_connection(ap,con)
         Roma::Messaging::ConPool.instance.return_connection(ap, con)
       end
-
+      
+      def close_connection_after_writing
+        sess = getSession
+        sess.close
+        puts "$$$ 1"
+      end
     end
 
     class JavaHandler < Java::jp.co.rakuten.rit.roma.event.Handler

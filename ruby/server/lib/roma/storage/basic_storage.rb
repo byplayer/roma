@@ -111,7 +111,8 @@ module Roma
       end
 
       def pack_data(vn, physical_clock, logical_clock, expire, value)
-        [vn,physical_clock, logical_clock, expire, value].pack(PACK_TEMPLATE)
+#        value = String.from_java_bytes(value)
+        [vn, physical_clock, logical_clock, expire, value].pack(PACK_TEMPLATE)
       end
 
       def unpack_data(str)
