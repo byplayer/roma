@@ -99,21 +99,25 @@ module Roma
       # [16..  ] value data
 
       PACK_HEADER_TEMPLATE='NNNN'
+
       PACK_TEMPLATE=PACK_HEADER_TEMPLATE+'a*'
+
       def pack_header(vn, physical_clock, logical_clock, expire)
         [vn,physical_clock, logical_clock, expire].pack(PACK_HEADER_TEMPLATE)
       end
+
       def unpack_header(str)
         str.unpack(PACK_HEADER_TEMPLATE)
       end
+
       def pack_data(vn, physical_clock, logical_clock, expire, value)
         [vn,physical_clock, logical_clock, expire, value].pack(PACK_TEMPLATE)
       end
+
       def unpack_data(str)
         str.unpack(PACK_TEMPLATE)
       end
       private :pack_header, :unpack_header, :pack_data, :unpack_data
-
 
       def get_context(vn, k, d)
         buf = @hdb[@hdiv[vn]].get(k)
