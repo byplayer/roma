@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 require 'roma/async_process'
-require 'roma/messaging/con_pool'
 require 'roma/command/vn_command_receiver'
 
 module Roma
@@ -145,41 +143,6 @@ module Roma
         send_data("STARTED #{path}/#{@nid}\r\n")
       rescue => e
         @log.error("#{e}\n#{$@}")
-      end
-
-      def acquire_vnodes
-        count = 0
-        nv = @rttable.v_idx.length
-        while (@rttable.vnode_balance(@nid) == :less && count < nv) do
-          count += 1
-          break unless acquire_vnode
-        end
-        @log.info("acquire_vnodes has done.")
-      rescue => e
-        @log.error("#{e}\n#{$@}")
-      end
-
-      def acquire_vnode
-        widthout_nodes = @rttable.nodes
-
-        unless @stats.enabled_repetition_host_in_routing
-          myhost = @stats.ap_str.split(/[:_]/)[0]
-          widthout_nodes.delete_if{|nid| nid.split(/[:_]/)[0] != myhost }
-        else
-          widthout_nodes = [@stats.ap_str]
-        end
-
-        vn, nodes = @rttable.sample_vnode(widthout_nodes)
-        unless vn
-          @log.warn("acquire_vnode:sample_vnode dose not found")
-          return false
-        end
-        #
-        # tunning point
-        # sleep 0.1
-        #
-        req_push_a_vnode(vn, nodes[0], rand(@rttable.rn) == 0)
-        true
       end
 
     end # module BackgroundCommandReceiver

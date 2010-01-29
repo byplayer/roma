@@ -1,6 +1,5 @@
 require 'roma/stats'
 require 'roma/version'
-require 'roma/messaging/con_pool'
 
 module Roma
   module Command
