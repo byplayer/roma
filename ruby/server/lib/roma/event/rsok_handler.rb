@@ -7,67 +7,6 @@ require 'roma/logging/rlogger'
 
 module Roma
   module Event
-    
-
-    #
-    # receive a first line in memcached command in a command execution thread model.
-    #
-    class RubySocketHandler
-      
-      def self.run(addr, port, storages, rttable, log)
-        serv = TCPServer.new(addr, port)
-                           
-        event_loop = true
-        while(event_loop)
-          next unless select([serv],[],[],0.1)
-          sock = serv.accept
-      
-          # command execution thread
-          Thread.new {
-            session = RubySocketSession.new(sock)
-            log.info("Connected from #{session.addr[1]}:#{session.addr[0]}") 
-            receiver = Roma::Command::Receiver.new(session, storages, rttable)
-              
-            while(event_loop && !session.close?)
-              begin
-                s = session.gets
-                break if s == nil # if a closed socket by client.
-                
-                s = s.chomp.split(/ /)
-                if s[0] && receiver.ev_list.key?(s[0].downcase)
-#log.debug(s[0].downcase)
-                  receiver.send(receiver.ev_list[s[0].downcase],s)
-                  session.last_cmd=s
-                elsif s.length==0
-                  next # wait a next command
-                elsif s[0]=='!!' && session.last_cmd
-                  session.send_data(session.last_cmd.join(' ')+"\r\n") # command echo
-                  receiver.send(receiver.ev_list[session.last_cmd[0].downcase],session.last_cmd)
-                else # command error
-                  log.warn("command error:#{s}")
-                  session.send_data("ERROR\r\n")
-                  break
-                end
-
-                # check the balse command received. 
-                event_loop = false if session.stop_event_loop
-              rescue IOError
-                log.error("#{e.inspect}")
-                break # session close for IOError.
-              rescue =>e
-                log.error("#{e.inspect}")
-              end
-            end
-
-            session.close
-            log.info("Disconnected from #{session.addr[1]}:#{session.addr[0]}")
-          }
-        end
-
-      end
-
-    end # class RubySocketHandler
-
     #
     # receive a first line in memcached command in the event loop model.
     #
@@ -116,6 +55,10 @@ module Roma
 
       def self.receiver_class
         Roma::Command::Receiver
+      end
+
+      def self.con_pool
+        Roma::Messaging::ConPool.instance
       end
 
       def run
