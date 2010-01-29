@@ -10,11 +10,10 @@ module Roma
       # balse [reason]
       def ev_balse(s)
         send_data("Are you sure?(yes/no)\r\n")
-        if gets != "yes\r\n"
+        if gets.chomp != "yes"
           close_connection_after_writing
           return
         end
-
         if s.length == 2
           @log.info("Receive a balse #{s[1]}")
         else

@@ -85,7 +85,6 @@ module Roma
       def execCommand cmds
         s = []
         cmds.each{ |cmd|
-          puts "cmd: #{cmd}"
           s << cmd
         }
         puts "command name: #{ev_list[s[0].downcase]}"
@@ -102,32 +101,31 @@ module Roma
       end
       
       def gets
-        blockingReadLine
+        line = blockingReadLine
       end
 
       def stop_event_loop
-        puts "$$$ 2"
         stopEventLoop
-        puts "$$$ 3"
       end
 
       def get_connection(ap)
-        Roma::Messaging::ConPool.instance.get_connection(ap)
+        getConnection ap
+#        Roma::Messaging::ConPool.instance.get_connection(ap)
       end
 
-      def return_connection(ap,con)
-        Roma::Messaging::ConPool.instance.return_connection(ap, con)
+      def return_connection(ap,conn)
+        putConnection ap, conn
+#        Roma::Messaging::ConPool.instance.return_connection(ap, con)
       end
 
       def close_connection_after_writing
         sess = getSession
         sess.close
-        puts "$$$ 1"
       end
     end
 
     class JavaHandler < Java::jp.co.rakuten.rit.roma.event.Handler
- 
+
       def self.start(addr, port, storages, rttable, stats, log)
         if stats.verbose
           Roma::Event::JavaSocketSession.class_eval{
@@ -152,20 +150,15 @@ module Roma
       def self.close_conpool(nid)
 
       end
+      
+      def self.con_pool
+        getConnectionPool
+      end
 
       def self.receiver_class
         Roma::Event::JavaReceiver
       end
 
     end # class JavaHandler < Java::jp.co.rakuten.rit.roma.event.Handler
-
-    class JavaSocketSession < Java::jp.co.rakuten.rit.roma.event.Session
-
-      def gets_firstline
-        readLine()
-      end
-
-    end
-
   end # module Event
 end # module Roma

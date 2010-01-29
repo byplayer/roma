@@ -2,89 +2,104 @@ package jp.co.rakuten.rit.roma.event;
 
 import java.io.IOException;
 
+import jp.co.rakuten.rit.roma.messaging.Connection;
+
 public class Receiver {
 
-	private Handler handler;
+    private Handler handler;
 
-	private Session sess;
+    private Session sess;
 
-	public Receiver(Session sess) {
-		this.sess = sess;
-	}
+    public Receiver(Session sess) {
+        this.sess = sess;
+    }
 
-	public void postInit() {
-	}
+    public void postInit() {
+    }
 
-	void setHandler(Handler handler) {
-		this.handler = handler;
-	}
+    void setHandler(Handler handler) {
+        this.handler = handler;
+    }
 
-	public Session getSession() {
-		return sess;
-	}
+    public Session getSession() {
+        return sess;
+    }
 
-	public void stopEventLoop() {
-		handler.stopEventService();
-	}
+    public void setCommands(String commandLine) {
+        sess.setCommands(commandLine);
+    }
 
-	public String readLine() throws IOException {
-		return sess.readLine();
-	}
+    public Connection getConnection(String nodeID) throws IOException {
+        return handler.getConnectionPool().get(nodeID);
+    }
 
-	public String blockingReadLine() throws IOException {
-		return sess.blockingReadLine();
-	}
+    public void putConnection(String nodeID, Connection conn)
+            throws IOException {
+        handler.getConnectionPool().put(nodeID, conn);
+    }
 
-	public byte[] readBytes(int len) throws IOException {
-		return sess.readBytes(len);
-	}
+    public void stopEventLoop() {
+        handler.stopService();
+    }
 
-	public void writeBytes(byte[] bytes) throws IOException {
-		sess.writeBytes(bytes);
-	}
+    public String readLine() throws IOException {
+        return sess.readLine();
+    }
 
-	public void writeString(String data) throws IOException {
-		sess.writeString(data);
-	}
+    public String blockingReadLine() throws IOException {
+        return sess.blockingReadLine();
+    }
 
-	public void execCommand() throws IOException {
-		String[] commands = sess.getCommands();
-		execCommand(commands);
-	}
+    public byte[] readBytes(int len) throws IOException {
+        return sess.readBytes(len);
+    }
 
-	public void execCommand(String[] commands) throws IOException {
-	}
+    public void writeBytes(byte[] bytes) throws IOException {
+        sess.writeBytes(bytes);
+    }
 
-	// public void execCommand(String[] commands) throws IOException {
-	// String command = commands[0].toLowerCase();
-	// if (command.equals("set")) {
-	// execSetCommand(commands);
-	// } else if (command.equals("get")) {
-	// execGetCommand(commands);
-	// } else {
-	// execErrorCommand(commands);
-	// // throw new RuntimeException("Command not found");
-	// }
-	// }
+    public void writeString(String data) throws IOException {
+        sess.writeString(data);
+    }
 
-	public void execSetCommand(String[] commands) throws IOException {
-		// commands[0]: command
-		// commands[1]: key
-		// commands[2]: flag
-		// commands[3]: expire time
-		int len = Integer.parseInt(commands[4]); // len
-		// System.out.println("len: " + len);
-		byte[] bytes = readBytes(len);
-		// System.out.println("val: " + new String(bytes));
-		readBytes(2); // "\r\n"
-		writeString("STORED\r\n");
-	}
+    public void execCommand() throws IOException {
+        String[] commands = sess.getCommands();
+        execCommand(commands);
+    }
 
-	public void execGetCommand(String[] commands) throws IOException {
-		// TODO
-	}
+    // public void execCommand(String[] commands) throws IOException {
+    // }
 
-	public void execErrorCommand(String[] commands) throws IOException {
-		writeString("Command not found: " + commands[0] + "\r\n");
-	}
+    public void execCommand(String[] commands) throws IOException {
+        String command = commands[0].toLowerCase();
+        if (command.equals("set")) {
+            execSetCommand(commands);
+        } else if (command.equals("get")) {
+            execGetCommand(commands);
+        } else {
+            execErrorCommand(commands);
+            // throw new RuntimeException("Command not found");
+        }
+    }
+
+    public void execSetCommand(String[] commands) throws IOException {
+        // commands[0]: command
+        // commands[1]: key
+        // commands[2]: flag
+        // commands[3]: expire time
+        int len = Integer.parseInt(commands[4]); // len
+        // System.out.println("len: " + len);
+        byte[] bytes = readBytes(len);
+        // System.out.println("val: " + new String(bytes));
+        readBytes(2); // "\r\n"
+        writeString("STORED\r\n");
+    }
+
+    public void execGetCommand(String[] commands) throws IOException {
+        // TODO
+    }
+
+    public void execErrorCommand(String[] commands) throws IOException {
+        writeString("Command not found: " + commands[0] + "\r\n");
+    }
 }
