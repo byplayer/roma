@@ -10,9 +10,6 @@ require 'roma/command_plugin'
 require 'roma/async_process'
 require 'roma/write_behind'
 require 'roma/logging/rlogger'
-require 'roma/messaging/con_pool'
-#require 'roma/event/handler'
-require 'roma/event/rsok_handler'
 require 'roma/routing/routing_data'
 require 'timeout'
 
@@ -279,10 +276,10 @@ module Roma
 
       nodes.each{|nid|
         begin
-          con = Roma::Messaging::ConPool.instance.get_connection(nid)
+          con = Roma::Config::HANDLER_CLASS::con_pool.get_connection(nid)
           con.write("join #{@stats.ap_str}\r\n")
           con.gets
-          Roma::Messaging::ConPool.instance.return_connection(nid, con)
+          Roma::Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
         rescue =>e
           raise "Hotscale initialize failed.\n#{nid} unreachabled."
         end
@@ -291,7 +288,7 @@ module Roma
     end
 
     def get_routedump(nid)
-      con = Roma::Messaging::ConPool.instance.get_connection(nid)
+      con = Roma::Config::HANDLER_CLASS::con_pool.get_connection(nid)
       con.write("routingdump\r\n")
       len = con.gets
       if len.to_i <= 0
@@ -306,7 +303,7 @@ module Roma
       con.read(2)
       con.gets
       rd = Marshal.load(rcv)
-      Roma::Messaging::ConPool.instance.return_connection(nid,con)
+      Roma::Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
       rd
     rescue
       nil
@@ -433,10 +430,10 @@ module Roma
 
             @rttable.create_nodes_from_v_idx
             begin
-              con = Roma::Messaging::ConPool.instance.get_connection(nodes[idx-1])
+              con = Roma::Config::HANDLER_CLASS::con_pool.get_connection(nodes[idx-1])
               con.write("create_nodes_from_v_idx\r\n")
               con.gets
-              Roma::Messaging::ConPool.instance.return_connection(nodes[idx-1], con)
+              Roma::Config::HANDLER_CLASS::con_pool.return_connection(nodes[idx-1], con)
             rescue =>e
               @log.error("create_nodes_from_v_idx command unreachabled to the #{nodes[idx-1]}.")
             end
@@ -485,16 +482,16 @@ module Roma
       res = nil
       if tout
         timeout(tout){
-          con = Roma::Messaging::ConPool.instance.get_connection(nid)
+          con = Roma::Config::HANDLER_CLASS::con_pool.get_connection(nid)
           con.write(cmd)
           res = con.gets
-          Roma::Messaging::ConPool.instance.return_connection(nid, con)
+          Roma::Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
         }
       else
-        con = Roma::Messaging::ConPool.instance.get_connection(nid)
+        con = Roma::Config::HANDLER_CLASS::con_pool.get_connection(nid)
         con.write(cmd)
         res = con.gets
-        Roma::Messaging::ConPool.instance.return_connection(nid, con)
+        Roma::Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
       end
       if res
         res.chomp!

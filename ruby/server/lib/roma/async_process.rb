@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 require 'thread'
 require 'digest/sha1'
+require 'roma/config'
 
 module Roma
   
@@ -142,11 +143,11 @@ module Roma
     end
 
     def delete_to_end_of_dump(key)
-      con = Roma::Messaging::ConPool.instance.get_connection(@stats.ap_str)
+      con = Roma::Config::HANDLER_CLASS::con_pool.get_connection(@stats.ap_str)
       con.write("delete #{key}\eroma\r\n")
       res = con.gets
       res.chomp! if res
-      Roma::Messaging::ConPool.instance.return_connection(@stats.ap_str,con)
+      Roma::Config::HANDLER_CLASS::con_pool.return_connection(@stats.ap_str, con)
       res
     end
 
@@ -154,14 +155,14 @@ module Roma
       count = 0
       begin
         sleep 0.1
-        con = Roma::Messaging::ConPool.instance.get_connection(nid)
+        con = Roma::Config::HANDLER_CLASS::con_pool.get_connection(nid)
         con.write("add #{key}\eroma 0 86400 #{nid.length}\r\n#{nid}\r\n")
         res = con.gets
         unless res=="STORED\r\n"
           con.write("append #{key}\eroma 0 86400 #{nid.length+1}\r\n,#{nid}\r\n")
           res = con.gets
         end
-        Roma::Messaging::ConPool.instance.return_connection(nid,con)
+        Roma::Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
         count += 1
       end while(res!="STORED\r\n" && count < 5)
       res.chomp! if res
@@ -268,7 +269,7 @@ module Roma
       @log.error("#{e.inspect} #{$@}")
     ensure
       @do_sync_process = false
-      Roma::Messaging::ConPool.instance.close_all
+      Roma::Config::HANDLER_CLASS::con_pool.close_all
     end
 
     def acquired_recover_process
@@ -352,14 +353,14 @@ module Roma
     end
  
     def req_push_a_vnode(vn, src_nid, is_primary)
-      con = Roma::Messaging::ConPool.instance.get_connection(src_nid)
+      con = Roma::Config::HANDLER_CLASS::con_pool.get_connection(src_nid)
       con.write("reqpushv #{vn} #{@stats.ap_str} #{is_primary}\r\n")
       res = con.gets # receive 'PUSHED\r\n' | 'REJECTED\r\n'
       if res == "REJECTED\r\n"
         @log.warn("req_push_a_vnode:request was rejected from #{src_nid}.")
         return :rejected
       end
-      Roma::Messaging::ConPool.instance.return_connection(src_nid,con)
+      Roma::Config::HANDLER_CLASS::con_pool.return_connection(src_nid, con)
       # waiting for pushv
       count = 0
       while @rttable.search_nodes(vn).include?(@stats.ap_str)==false && count < 300
@@ -408,7 +409,7 @@ module Roma
       @log.error("#{e}\n#{$@}")
     ensure
       @do_recover_process = false
-      Roma::Messaging::ConPool.instance.close_all
+      Roma::Config::HANDLER_CLASS::con_pool.close_all
     end
 
     def release_process
@@ -453,7 +454,7 @@ module Roma
       @log.error("#{e}\n#{$@}")
     ensure
       @do_release_process = false
-      Roma::Messaging::ConPool.instance.close_all
+      Roma::Config::HANDLER_CLASS::con_pool.close_all
     end
  
     def sync_a_vnode_for_release(vn, to_nid, new_nids)
@@ -582,8 +583,7 @@ module Roma
         @log.info("hname=#{hname} vn=#{vn} has a empty data.")
         return "STORED"
       end
-      con = Roma::Messaging::ConPool.instance.get_connection(nid)
-
+      con = Roma::Config::HANDLER_CLASS::con_pool.get_connection(nid)
       con.write("pushv #{hname} #{vn}\r\n")
       res = con.gets # READY\r\n or error string
       if res != "READY\r\n"
@@ -593,7 +593,7 @@ module Roma
       con.write("#{dmp.length}\r\n#{dmp}\r\nEND\r\n")
       res = con.gets # STORED\r\n or error string
 
-      Roma::Messaging::ConPool.instance.return_connection(nid,con)
+      Roma::Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
       res.chomp! if res
       res
     rescue Errno::EPIPE
@@ -607,7 +607,7 @@ module Roma
     def push_a_vnode_stream(hname, vn, nid)
       @stats.run_iterate_storage = true
       @log.info("push_a_vnode_stream:hname=#{hname} vn=#{vn} nid=#{nid}")
-      con = Roma::Messaging::ConPool.instance.get_connection(nid)
+      con = Roma::Config::HANDLER_CLASS::con_pool.get_connection(nid)
 
       con.write("spushv #{hname} #{vn}\r\n")
 
@@ -625,7 +625,7 @@ module Roma
       con.write("\0"*20) # end of steram
 
       res = con.gets # STORED\r\n or error string
-      Roma::Messaging::ConPool.instance.return_connection(nid,con)
+      Roma::Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
       res.chomp! if res
       res
     rescue =>e
