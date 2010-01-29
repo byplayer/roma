@@ -29,7 +29,7 @@ module Roma
 
       def self.start(addr, port, storages, rttable, stats, log)
         if stats.verbose
-          Roma::Event::RubySocketSession.class_eval{
+          RubySocketSession.class_eval{
             alias gets_firstline2 gets_firstline
             undef gets_firstline
 
@@ -41,7 +41,7 @@ module Roma
           }
         end
 
-        @@obj =  Roma::Event::RubySocketHandler2.new(addr, port, storages, rttable, log)
+        @@obj = RubySocketHandler2.new(addr, port, storages, rttable, log)
         @@obj.run
       end
 

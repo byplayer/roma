@@ -8,7 +8,7 @@ module Roma
     class FileWriter
 
       def initialize(path, shift_size, log)
-        @stats = Roma::Stats.instance
+        @stats = Stats.instance
         path.chop! if path[-1]=='/'
         @path = path
         @log = log
