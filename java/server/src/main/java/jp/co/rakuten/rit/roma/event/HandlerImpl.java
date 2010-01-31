@@ -45,7 +45,7 @@ public class HandlerImpl extends Handler {
                     }
                     selector.wakeup();
                 } catch (Exception e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                 }
             }
         }
@@ -117,7 +117,6 @@ public class HandlerImpl extends Handler {
             // selector.select(selectInterval);
             // selector.selectNow();
             selector.select();
-
             reregisterChannels();
 
             for (Iterator<SelectionKey> keys = selector.selectedKeys()
@@ -146,7 +145,6 @@ public class HandlerImpl extends Handler {
 
     @Override
     public void stopService() {
-        System.out.println("#### 0");
         super.stopService();
     }
 
@@ -201,9 +199,9 @@ public class HandlerImpl extends Handler {
         String commandLine = receiver.readLine();
         if (commandLine != null) {
             receiver.setCommands(commandLine);
-            // System.out.println("# cl: " + commandLine);
-            // System.out.println("# key: " + key);
-            // System.out.println("# channel: " + key.channel());
+//             System.out.println("# cl: " + commandLine);
+//             System.out.println("# key: " + key);
+//             System.out.println("# channel: " + key.channel());
             try {
                 key.cancel();
                 synchronized (reregisterChannels) {

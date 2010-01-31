@@ -2,29 +2,17 @@ package jp.co.rakuten.rit.roma.event;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import jp.co.rakuten.rit.roma.messaging.ConnectionPool;
 
 public abstract class Handler {
 
-    private static final Logger LOG = Logger.getLogger(Handler.class.getName());
+    private static final Logger LOG =
+	Logger.getLogger(Handler.class.getName());
 
     class ServiceImpl implements Runnable {
 
@@ -53,13 +41,13 @@ public abstract class Handler {
         instance.initHandler(port, receiverFactory);
         instance.startHandler();
 
-        while (enabledEventLoop) {
+        do {
             try {
                 Thread.sleep(3000);
             } catch (InterruptedException e) {
                 LOG.throwing(Handler.class.getName(), "run", e);
             }
-        }
+        } while (enabledEventLoop);
         instance.stopHandler();
     }
 

@@ -119,8 +119,8 @@ public class NetSpyMemcachedClientSample {
             // memc = new MemcachedClient(new InetSocketAddress("localhost",
             // 11211));
 
-            t.big_loop(1, memc);
-            // t.big_loop(1, null);
+            // t.big_loop(1, memc);
+            t.big_loop(10, null);
 
             while (true) {
                 Thread.sleep(5 * 1000);

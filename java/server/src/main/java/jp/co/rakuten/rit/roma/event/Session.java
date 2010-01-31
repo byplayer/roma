@@ -79,7 +79,6 @@ public class Session {
             }
         }
         String s = bufferToString(buf, len);
-        System.out.println("#### s: " + s);
         return s;
         // return bufferToString(buf, len);
     }
