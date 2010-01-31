@@ -74,19 +74,15 @@ public class Session {
             } else {
                 buf.put(b1[0]);
                 b1[0] = b2[0];
-                // System.out.println("b1: " + (char)b1[0]);
                 len++;
             }
         }
-        String s = bufferToString(buf, len);
-        return s;
-        // return bufferToString(buf, len);
+         return bufferToString(buf, len);
     }
 
     private static String bufferToString(ByteBuffer buf, int len) {
         byte[] bytes = new byte[len];
         for (int i = 0; i < len; ++i) {
-            // System.out.println("i: " + i + ", b: " + buf.get(i));
             bytes[i] = buf.get(i);
         }
         return new String(bytes);

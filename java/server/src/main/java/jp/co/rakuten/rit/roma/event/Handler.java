@@ -12,7 +12,7 @@ import jp.co.rakuten.rit.roma.messaging.ConnectionPool;
 public abstract class Handler {
 
     private static final Logger LOG =
-	Logger.getLogger(Handler.class.getName());
+        Logger.getLogger(Handler.class.getName());
 
     class ServiceImpl implements Runnable {
 
@@ -37,7 +37,7 @@ public abstract class Handler {
         if (instance != null) {
             throw new IllegalStateException("EventHandler is already run.");
         }
-        instance = new HandlerImpl2();
+        instance = new HandlerImpl();
         instance.initHandler(port, receiverFactory);
         instance.startHandler();
 
@@ -65,15 +65,18 @@ public abstract class Handler {
 
     public void initHandler(int port, ReceiverFactory factory)
             throws IOException {
+        LOG.info("initialize Event Handler");
         serverSocketChannel = ServerSocketChannel.open();
-        serverSocketChannel.socket().setReceiveBufferSize(DEFAULT_BUFFER_SIZE);
+        // serverSocketChannel.socket().setReceiveBufferSize(DEFAULT_BUFFER_SIZE);
         // serverSocketChannel.socket().setReuseAddress(true);
         serverSocketChannel.socket().bind(new InetSocketAddress(port));
+        LOG.info("bind port: " + port);
         connExecutor = Executors.newSingleThreadExecutor();
         this.receiverFactory = factory;
     }
 
     public void startHandler() throws IOException {
+        LOG.info("start Event Handler");
         connExecutor.execute(new ServiceImpl());
     }
 
