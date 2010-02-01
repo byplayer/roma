@@ -1,6 +1,4 @@
 require 'roma/stats'
-require 'roma/version'
-require 'roma/messaging/con_pool'
 require 'roma/command/sys_command_receiver'
 require 'roma/command/bg_command_receiver'
 require 'roma/command/rt_command_receiver'

@@ -1,4 +1,3 @@
-require 'roma/messaging/con_pool'
 require 'roma/async_process'
 
 module Roma
@@ -96,23 +95,6 @@ module Roma
         send_data("PUSHED\r\n")
       rescue =>e
         @log.error("#{e}\n#{$@}")
-      end
-
-      def req_push_a_vnode(vn, src_nid, is_primary)
-        con = Roma::Messaging::ConPool.instance.get_connection(src_nid)
-        con.write("reqpushv #{vn} #{@nid} #{is_primary}\r\n")
-        res = con.gets # receive 'PUSHED\r\n' | 'REJECTED\r\n'
-        Roma::Messaging::ConPool.instance.return_connection(src_nid,con)
-        # waiting for pushv
-        count = 0
-        while @rttable.search_nodes(vn).include?(@nid)==false && count < 300
-          sleep 0.1
-          count += 1
-        end
-      rescue =>e
-        @log.error("#{e}\n#{$@}")
-        @rttable.proc_failed(src_nid)
-        false
       end
 
       def em_receive_dump(hname, len)

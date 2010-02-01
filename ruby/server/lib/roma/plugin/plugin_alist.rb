@@ -1,5 +1,4 @@
 require 'timeout'
-require 'roma/messaging/con_pool'
 require 'json'
 
 module Roma

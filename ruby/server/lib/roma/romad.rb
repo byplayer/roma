@@ -10,9 +10,6 @@ require 'roma/command_plugin'
 require 'roma/async_process'
 require 'roma/write_behind'
 require 'roma/logging/rlogger'
-require 'roma/messaging/con_pool'
-#require 'roma/event/handler'
-require 'roma/event/rsok_handler'
 require 'roma/routing/routing_data'
 require 'timeout'
 
@@ -68,7 +65,7 @@ module Roma
       while(@eventloop)
         @eventloop = false
         begin
-          Roma::Config::HANDLER_CLASS::start('0.0.0.0', @stats.port, @storages, @rttable, @stats, @log)
+          Config::HANDLER_CLASS::start('0.0.0.0', @stats.port, @storages, @rttable, @stats, @log)
         rescue =>e
           @log.error("#{e}\n#{$@}")
           retry
@@ -77,28 +74,28 @@ module Roma
     end
 
     def initialize_stats
-      if Roma::Config.const_defined?(:REDUNDANT_ZREDUNDANT_SIZE)
-        @stats.size_of_zredundant = Roma::Config::REDUNDANT_ZREDUNDANT_SIZE
+      if Config.const_defined?(:REDUNDANT_ZREDUNDANT_SIZE)
+        @stats.size_of_zredundant = Config::REDUNDANT_ZREDUNDANT_SIZE
       end
     end
 
     def initialize_wb_witer
-      @wb_writer = Roma::WriteBehind::FileWriter.new(
-                                                     Roma::Config::WRITEBEHIND_PATH, 
-                                                     Roma::Config::WRITEBEHIND_SHIFT_SIZE,
+      @wb_writer = WriteBehind::FileWriter.new(
+                                                     Config::WRITEBEHIND_PATH, 
+                                                     Config::WRITEBEHIND_SHIFT_SIZE,
                                                      @log)
     end
 
     def initialize_plugin
-      return unless Roma::Config.const_defined? :PLUGIN_FILES
+      return unless Config.const_defined? :PLUGIN_FILES
 
-      Roma::Config::PLUGIN_FILES.each do|f|
+      Config::PLUGIN_FILES.each do|f|
         require "roma/plugin/#{f}"
         @log.info("roma/plugin/#{f} loaded")
       end
 
-      Roma::CommandPlugin.plugins.each do|plugin|
-        Roma::Config::HANDLER_CLASS::receiver_class.class_eval do
+      CommandPlugin.plugins.each do|plugin|
+        Config::HANDLER_CLASS::receiver_class.class_eval do
           include plugin
         end
         @log.info("#{plugin.to_s} included")
@@ -106,21 +103,21 @@ module Roma
     end
 
     def initialize_logger
-      Roma::Logging::RLogger.create_singleton_instance("#{Roma::Config::LOG_PATH}/#{@stats.ap_str}.log",
-                                                       Roma::Config::LOG_SHIFT_AGE,
-                                                       Roma::Config::LOG_SHIFT_SIZE)
-      @log = Roma::Logging::RLogger.instance
+      Logging::RLogger.create_singleton_instance("#{Config::LOG_PATH}/#{@stats.ap_str}.log",
+                                                       Config::LOG_SHIFT_AGE,
+                                                       Config::LOG_SHIFT_SIZE)
+      @log = Logging::RLogger.instance
 
       if Config.const_defined? :LOG_LEVEL
         case Config::LOG_LEVEL
         when :debug
-          @log.level = Roma::Logging::RLogger::Severity::DEBUG
+          @log.level = Logging::RLogger::Severity::DEBUG
         when :info
-          @log.level = Roma::Logging::RLogger::Severity::INFO
+          @log.level = Logging::RLogger::Severity::INFO
         when :warn
-          @log.level = Roma::Logging::RLogger::Severity::WARN
+          @log.level = Logging::RLogger::Severity::WARN
         when :error
-          @log.level = Roma::Logging::RLogger::Severity::ERROR
+          @log.level = Logging::RLogger::Severity::ERROR
         end
       end
     end
@@ -138,7 +135,7 @@ module Roma
 
       opts.on("-j","--join [address:port]") { |v| @stats.join_ap = v }
 
-      @stats.port = Roma::Config::DEFAULT_PORT.to_s
+      @stats.port = Config::DEFAULT_PORT.to_s
       opts.on("-p", "--port [PORT]") { |v| @stats.port = v }
 
       @stats.start_with_failover = false
@@ -148,10 +145,10 @@ module Roma
       opts.on(nil,"--verbose"){ |v| @stats.verbose = true }
 
       opts.on_tail("-v", "--version", "Show version") {
-        puts "romad.rb #{Roma::VERSION}"; exit
+        puts "romad.rb #{VERSION}"; exit
       }
       
-      @stats.name = Roma::Config::DEFAULT_NAME
+      @stats.name = Config::DEFAULT_NAME
       opts.on("-n", "--name [name]") { |v| @stats.name = v }
 
       @stats.enabled_repetition_host_in_routing = false
@@ -180,7 +177,7 @@ module Roma
     def initialize_storages
       @storages = {}
       if Config.const_defined? :STORAGE_PATH
-        path = "#{Roma::Config::STORAGE_PATH}/#{@stats.ap_str}"
+        path = "#{Config::STORAGE_PATH}/#{@stats.ap_str}"
       end
       
       if Config.const_defined? :STORAGE_CLASS
@@ -224,29 +221,29 @@ module Roma
       if @stats.join_ap
         initialize_rttable_join
       else
-        fname = "#{Roma::Config::RTTABLE_PATH}/#{@stats.ap_str}.route"
+        fname = "#{Config::RTTABLE_PATH}/#{@stats.ap_str}.route"
         raise "#{fname} not found." unless File::exist?(fname)
-        rd = Roma::Routing::RoutingData::load(fname)
+        rd = Routing::RoutingData::load(fname)
         raise "It failed in loading the routing table data." unless rd
-        @rttable = Roma::Routing::ChurnbasedRoutingTable.new(rd,fname)
+        @rttable = Routing::ChurnbasedRoutingTable.new(rd,fname)
       end
       
-      if Roma::Config.const_defined?(:ROUTING_FAIL_CNT_THRESHOLD)
-        @rttable.fail_cnt_threshold = Roma::Config::ROUTING_FAIL_CNT_THRESHOLD
+      if Config.const_defined?(:ROUTING_FAIL_CNT_THRESHOLD)
+        @rttable.fail_cnt_threshold = Config::ROUTING_FAIL_CNT_THRESHOLD
       end
-      if Roma::Config.const_defined?(:ROUTING_FAIL_CNT_GAP)
-        @rttable.fail_cnt_gap = Roma::Config::ROUTING_FAIL_CNT_GAP
+      if Config.const_defined?(:ROUTING_FAIL_CNT_GAP)
+        @rttable.fail_cnt_gap = Config::ROUTING_FAIL_CNT_GAP
       end
-      @rttable.lost_action = Roma::Config::DEFAULT_LOST_ACTION
+      @rttable.lost_action = Config::DEFAULT_LOST_ACTION
       @rttable.enabled_failover = @stats.start_with_failover
       @rttable.set_leave_proc{|nid|
-        Roma::Config::HANDLER_CLASS::close_conpool(nid)
-        Roma::AsyncProcess::queue.push(Roma::AsyncMessage.new('broadcast_cmd',["leave #{nid}",[@stats.ap_str,nid,5]]))
+        Config::HANDLER_CLASS::close_conpool(nid)
+        AsyncProcess::queue.push(AsyncMessage.new('broadcast_cmd',["leave #{nid}",[@stats.ap_str,nid,5]]))
       }
       @rttable.set_lost_proc{
         if @rttable.lost_action == :shutdown
           async_broadcast_cmd("rbalse lose_data\r\n")
-          Roma::Config::HANDLER_CLASS::stop
+          Config::HANDLER_CLASS::stop
           @log.error("Romad has stopped, so that lose data.")
         end
       }
@@ -263,7 +260,7 @@ module Roma
           "me = \"#{@stats.name}\"  #{@stats.join_ap} = \"#{name}\""
       end
 
-      fname = "#{Roma::Config::RTTABLE_PATH}/#{@stats.ap_str}.route"
+      fname = "#{Config::RTTABLE_PATH}/#{@stats.ap_str}.route"
       if rd = get_routedump(@stats.join_ap)
         rd.save(fname)
       else
@@ -274,15 +271,15 @@ module Roma
         raise "ROMA has already contained #{@stats.ap_str}."
       end
 
-      @rttable = Roma::Routing::ChurnbasedRoutingTable.new(rd,fname)
+      @rttable = Routing::ChurnbasedRoutingTable.new(rd,fname)
       nodes = @rttable.nodes
 
       nodes.each{|nid|
         begin
-          con = Roma::Messaging::ConPool.instance.get_connection(nid)
+          con = Config::HANDLER_CLASS::con_pool.get_connection(nid)
           con.write("join #{@stats.ap_str}\r\n")
           con.gets
-          Roma::Messaging::ConPool.instance.return_connection(nid, con)
+          Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
         rescue =>e
           raise "Hotscale initialize failed.\n#{nid} unreachabled."
         end
@@ -291,7 +288,7 @@ module Roma
     end
 
     def get_routedump(nid)
-      con = Roma::Messaging::ConPool.instance.get_connection(nid)
+      con = Config::HANDLER_CLASS::con_pool.get_connection(nid)
       con.write("routingdump\r\n")
       len = con.gets
       if len.to_i <= 0
@@ -306,7 +303,7 @@ module Roma
       con.read(2)
       con.gets
       rd = Marshal.load(rcv)
-      Roma::Messaging::ConPool.instance.return_connection(nid,con)
+      Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
       rd
     rescue
       nil
@@ -316,7 +313,7 @@ module Roma
       return if @stats.run_acquire_vnodes || @rttable.nodes.length < 2
 
       if @rttable.vnode_balance(@stats.ap_str)==:less
-        Roma::AsyncProcess::queue.push(Roma::AsyncMessage.new('start_acquire_vnodes_process'))
+        AsyncProcess::queue.push(AsyncMessage.new('start_acquire_vnodes_process'))
       end
     end
 
@@ -373,7 +370,7 @@ module Roma
           @stats.run_acquire_vnodes == false &&
           @stats.run_recover == false &&
           @stats.run_iterate_storage == false)
-        Roma::AsyncProcess::queue.push(Roma::AsyncMessage.new('start_storage_clean_up_process'))
+        AsyncProcess::queue.push(AsyncMessage.new('start_storage_clean_up_process'))
       end
 
       @stats.clear_counters
@@ -422,7 +419,7 @@ module Roma
       idx=nodes.index(@stats.ap_str)
       unless idx
         @log.error("My node-id(=#{@stats.ap_str}) dose not found in the routingtable.")
-        Roma::Config::HANDLER_CLASS::stop
+        Config::HANDLER_CLASS::stop
         return
       end
       Thread.new{
@@ -433,10 +430,10 @@ module Roma
 
             @rttable.create_nodes_from_v_idx
             begin
-              con = Roma::Messaging::ConPool.instance.get_connection(nodes[idx-1])
+              con = Config::HANDLER_CLASS::con_pool.get_connection(nodes[idx-1])
               con.write("create_nodes_from_v_idx\r\n")
               con.gets
-              Roma::Messaging::ConPool.instance.return_connection(nodes[idx-1], con)
+              Config::HANDLER_CLASS::con_pool.return_connection(nodes[idx-1], con)
             rescue =>e
               @log.error("create_nodes_from_v_idx command unreachabled to the #{nodes[idx-1]}.")
             end
@@ -485,16 +482,16 @@ module Roma
       res = nil
       if tout
         timeout(tout){
-          con = Roma::Messaging::ConPool.instance.get_connection(nid)
+          con = Config::HANDLER_CLASS::con_pool.get_connection(nid)
           con.write(cmd)
           res = con.gets
-          Roma::Messaging::ConPool.instance.return_connection(nid, con)
+          Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
         }
       else
-        con = Roma::Messaging::ConPool.instance.get_connection(nid)
+        con = Config::HANDLER_CLASS::con_pool.get_connection(nid)
         con.write(cmd)
         res = con.gets
-        Roma::Messaging::ConPool.instance.return_connection(nid, con)
+        Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
       end
       if res
         res.chomp!
@@ -525,7 +522,7 @@ module Roma
       @storages.each_value{|st|
         st.closedb
       }
-      if @rttable.instance_of?(Roma::Routing::ChurnbasedRoutingTable)
+      if @rttable.instance_of?(Routing::ChurnbasedRoutingTable)
         @rttable.close_log
       end
       @log.info("Romad has stopped: #{@stats.ap_str}")

@@ -62,6 +62,10 @@ module Roma
         Roma::Command::Receiver
       end
 
+      def self.con_pool
+        Roma::Messaging::ConPool.instance
+      end
+
       def post_init
         @addr = Socket.unpack_sockaddr_in(get_peername)
         @log.info("Connected from #{@addr[1]}:#{@addr[0]}")
