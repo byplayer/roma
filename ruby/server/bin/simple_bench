@@ -9,3 +9,4 @@ client_base_path = Pathname(__FILE__).dirname.parent.parent.parent.parent.expand
 $LOAD_PATH.unshift("#{client_base_path}/roma-ruby-client/ruby/client/lib")
 
 require 'roma/tools/simple_bench'
+
