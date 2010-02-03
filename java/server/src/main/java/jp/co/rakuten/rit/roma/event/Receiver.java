@@ -2,7 +2,6 @@ package jp.co.rakuten.rit.roma.event;
 
 import java.io.IOException;
 
-import jp.co.rakuten.rit.roma.messaging.Connection;
 
 public class Receiver {
 
@@ -30,16 +29,24 @@ public class Receiver {
     }
 
     public Connection getConnection(String nodeID) throws IOException {
-        return handler.getConnectionPool().get(nodeID);
+        return Handler.getConnectionPool().get(nodeID);
     }
 
     public void putConnection(String nodeID, Connection conn)
             throws IOException {
-        handler.getConnectionPool().put(nodeID, conn);
+        Handler.getConnectionPool().put(nodeID, conn);
     }
 
     public void stopEventLoop() {
         handler.stopService();
+    }
+    
+    public byte[] readBytes(int len) throws IOException {
+        return sess.readBytes(len);
+    }
+
+    public String gets() throws IOException {
+        return sess.gets();
     }
 
     public String readLine() throws IOException {
@@ -48,10 +55,6 @@ public class Receiver {
 
     public String blockingReadLine() throws IOException {
         return sess.blockingReadLine();
-    }
-
-    public byte[] readBytes(int len) throws IOException {
-        return sess.readBytes(len);
     }
 
     public void writeBytes(byte[] bytes) throws IOException {
@@ -76,6 +79,8 @@ public class Receiver {
             execSetCommand(commands);
         } else if (command.equals("get")) {
             execGetCommand(commands);
+        } else if (command.equals("balse")) {
+            execBalseCommand(commands);
         } else {
             execErrorCommand(commands);
             // throw new RuntimeException("Command not found");
@@ -98,8 +103,24 @@ public class Receiver {
     public void execGetCommand(String[] commands) throws IOException {
         // TODO
     }
+    
+    public void execBalseCommand(String[] commands) throws IOException {
+        writeString("Are you sure?(yes/no)\r\n");
+        String s = gets();
+        if (s.equals("yes\r\n")) {
+            stopEventLoop();
+        } else {
+        }
+    }
 
     public void execErrorCommand(String[] commands) throws IOException {
         writeString("Command not found: " + commands[0] + "\r\n");
+    }
+    
+    public void closeSilently() {
+        try {
+            sess.close();
+        } catch (IOException e) {
+        }
     }
 }

@@ -7,7 +7,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
-import jp.co.rakuten.rit.roma.messaging.ConnectionPool;
 
 public abstract class Handler {
 
@@ -33,12 +32,13 @@ public abstract class Handler {
     private static Handler instance = null;
 
     public static void run(final String hostName, final int port,
-            final ReceiverFactory receiverFactory) throws IOException {
+            final ReceiverFactory receiverFactory, 
+            final ConnectionPoolFactory connPoolFactory) throws IOException {
         if (instance != null) {
             throw new IllegalStateException("EventHandler is already run.");
         }
         instance = new HandlerImpl();
-        instance.initHandler(port, receiverFactory);
+        instance.initHandler(port, receiverFactory, connPoolFactory);
         instance.startHandler();
 
         do {
@@ -60,10 +60,14 @@ public abstract class Handler {
     protected static boolean enabledEventLoop;
 
     protected ReceiverFactory receiverFactory;
+    
+    protected int connPoolSize = 5;
 
-    protected ConnectionPool connPool;
+    private static ConnectionPool connPool;
 
-    public void initHandler(int port, ReceiverFactory factory)
+    public void initHandler(int port,
+            ReceiverFactory recvFactory, 
+            ConnectionPoolFactory connPoolFactory)
             throws IOException {
         LOG.info("initialize Event Handler");
         serverSocketChannel = ServerSocketChannel.open();
@@ -71,8 +75,10 @@ public abstract class Handler {
         // serverSocketChannel.socket().setReuseAddress(true);
         serverSocketChannel.socket().bind(new InetSocketAddress(port));
         LOG.info("bind port: " + port);
+        connPool = connPoolFactory.newConnectionPool(connPoolSize);
+        LOG.info("create connection pool: " + connPoolSize);
         connExecutor = Executors.newSingleThreadExecutor();
-        this.receiverFactory = factory;
+        this.receiverFactory = recvFactory;
     }
 
     public void startHandler() throws IOException {
@@ -84,6 +90,7 @@ public abstract class Handler {
         if (connExecutor != null && !connExecutor.isShutdown()) {
             connExecutor.shutdownNow();
         }
+        close();
     }
 
     public void startService() throws IOException {
@@ -103,8 +110,8 @@ public abstract class Handler {
         } catch (IOException e) {
         }
     }
-
-    public ConnectionPool getConnectionPool() {
+    
+    public static ConnectionPool getConnectionPool() {
         return connPool;
     }
 }

@@ -22,8 +22,8 @@ public class NetSpyMemcachedClientSample {
                             ConnectionFactory cf = cfb.build();
 
                             List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-                            addresses.add(new InetSocketAddress("localhost",
-                                    11211));
+                            addresses.add(new InetSocketAddress("10.162.127.145", 11211));
+//                            addresses.add(new InetSocketAddress("localhost", 11211));
                             MemcachedClient memc = new MemcachedClient(cf,
                                     addresses);
                             small_loop(memc);
@@ -114,13 +114,14 @@ public class NetSpyMemcachedClientSample {
             ConnectionFactory cf = cfb.build();
 
             List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-            addresses.add(new InetSocketAddress("localhost", 11211));
+//            addresses.add(new InetSocketAddress("localhost", 11211));
+            addresses.add(new InetSocketAddress("10.162.127.145", 11211));
             memc = new MemcachedClient(cf, addresses);
             // memc = new MemcachedClient(new InetSocketAddress("localhost",
             // 11211));
 
-            // t.big_loop(1, memc);
-            t.big_loop(10, null);
+//            t.big_loop(1, memc);
+            t.big_loop(20, null);
 
             while (true) {
                 Thread.sleep(5 * 1000);

@@ -9,7 +9,7 @@ module Roma
       # balse [reason]
       def ev_balse(s)
         send_data("Are you sure?(yes/no)\r\n")
-        if gets.chomp != "yes"
+        if gets != "yes\r\n"
           close_connection_after_writing
           return
         end

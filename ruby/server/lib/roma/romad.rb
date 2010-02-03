@@ -52,6 +52,7 @@ module Roma
       start_network_event
 
       stop_async_process
+      stop_timer
       stop_wb_process
       stop
     end
@@ -318,18 +319,33 @@ module Roma
     end
 
     def start_timer
+      @timerloop = true
       Thread.new do
-        loop do
-          sleep 1
-          timer_event_1sec
+        while (@timerloop)
+          begin
+            sleep 1
+            timer_event_1sec
+          rescue => e
+            @log.error("#{e}\n#{$@}")
+            retry 
+          end
         end
       end
       Thread.new do
-        loop do
-          sleep 10
-          timer_event_10sec
+        while (@timerloop)
+          begin
+            sleep 10
+            timer_event_10sec
+          rescue => e
+            @log.error("#{e}\n#{$@}")
+            retry
+          end
         end
       end
+    end
+    
+    def stop_timer
+      @timerloop = false
     end
 
     def timer_event_1sec
@@ -374,7 +390,7 @@ module Roma
       end
 
       @stats.clear_counters
-    rescue =>e
+    rescue => e
       @log.error("#{e}\n#{$@}")
     end
 

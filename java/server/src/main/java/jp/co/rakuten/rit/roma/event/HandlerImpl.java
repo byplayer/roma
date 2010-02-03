@@ -29,8 +29,9 @@ public class HandlerImpl extends Handler {
 
         public void run() {
             while (true) {
+                Receiver receiver = null;
                 try {
-                    Receiver receiver = eventQueue.take();
+                    receiver = eventQueue.take();
                     receiver.execCommand();
                     SocketChannel ch = receiver.getSession().getSocketChannel();
                     synchronized (reregisterChannels) {
@@ -44,8 +45,13 @@ public class HandlerImpl extends Handler {
                         }
                     }
                     selector.wakeup();
+                } catch (InterruptedException e) {
+                    if (receiver != null) {
+                        receiver.closeSilently();
+                    }
+                    break;
                 } catch (Exception e) {
-//                    e.printStackTrace();
+                    e.printStackTrace();
                 }
             }
         }
@@ -67,9 +73,11 @@ public class HandlerImpl extends Handler {
     }
 
     @Override
-    public void initHandler(int port, ReceiverFactory receiverFactory)
+    public void initHandler(int port,
+            ReceiverFactory receiverFactory,
+            ConnectionPoolFactory connPoolFactory)
             throws IOException {
-        super.initHandler(port, receiverFactory);
+        super.initHandler(port, receiverFactory, connPoolFactory);
         serverSocketChannel.configureBlocking(false);
         selector = Selector.open();
         eventExecutorNumber = 100;
@@ -95,6 +103,9 @@ public class HandlerImpl extends Handler {
         super.stopHandler();
         if (eventExecutor != null && !eventExecutor.isShutdown()) {
             eventExecutor.shutdownNow();
+            if (!eventExecutor.isTerminated()) {
+                eventExecutor.shutdown();
+            }
         }
     }
 
@@ -187,7 +198,7 @@ public class HandlerImpl extends Handler {
             if (channel != null) {
                 Receiver receiver = removeReceiver(channel);
                 if (receiver != null) {
-                    receiver.getSession().close();
+                    receiver.closeSilently();
                 }
             }
         }
@@ -196,7 +207,12 @@ public class HandlerImpl extends Handler {
     private void handleReadable(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
         Receiver receiver = getReceiver(channel);
-        String commandLine = receiver.readLine();
+        String commandLine = null;
+        try {
+            commandLine = receiver.readLine();
+        } catch (IOException e) {
+            removeReceiver(channel);
+        }
         if (commandLine != null) {
             receiver.setCommands(commandLine);
 //             System.out.println("# cl: " + commandLine);

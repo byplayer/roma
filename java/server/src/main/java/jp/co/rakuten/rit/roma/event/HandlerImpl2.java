@@ -39,9 +39,11 @@ public class HandlerImpl2 extends Handler {
     }
 
     @Override
-    public void initHandler(int port, ReceiverFactory receiverFactory)
+    public void initHandler(int port,
+            ReceiverFactory receiverFactory,
+            ConnectionPoolFactory connPoolFactory)
             throws IOException {
-        super.initHandler(port, receiverFactory);
+        super.initHandler(port, receiverFactory, connPoolFactory);
         this.receiverExecutorNumber = 100;
         receiverExecutor = Executors.newFixedThreadPool(receiverExecutorNumber);
         // receiverExecutor = Executors.newCachedThreadPool();
