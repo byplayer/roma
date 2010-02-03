@@ -1,6 +1,4 @@
 #!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
-#
 require 'rubygems'
 require 'optparse'
 require 'roma/config'
@@ -14,7 +12,7 @@ require 'roma/routing/routing_data'
 require 'timeout'
 
 module Roma
-  
+
   class Romad
     include AsyncProcess
     include WriteBehindProcess
@@ -52,7 +50,6 @@ module Roma
       start_network_event
 
       stop_async_process
-      stop_timer
       stop_wb_process
       stop
     end
@@ -319,33 +316,18 @@ module Roma
     end
 
     def start_timer
-      @timerloop = true
       Thread.new do
-        while (@timerloop)
-          begin
-            sleep 1
-            timer_event_1sec
-          rescue => e
-            @log.error("#{e}\n#{$@}")
-            retry 
-          end
+        loop do
+          sleep 1
+          timer_event_1sec
         end
       end
       Thread.new do
-        while (@timerloop)
-          begin
-            sleep 10
-            timer_event_10sec
-          rescue => e
-            @log.error("#{e}\n#{$@}")
-            retry
-          end
+        loop do
+          sleep 10
+          timer_event_10sec
         end
       end
-    end
-    
-    def stop_timer
-      @timerloop = false
     end
 
     def timer_event_1sec
@@ -390,7 +372,7 @@ module Roma
       end
 
       @stats.clear_counters
-    rescue => e
+    rescue =>e
       @log.error("#{e}\n#{$@}")
     end
 
@@ -544,35 +526,6 @@ module Roma
       @log.info("Romad has stopped: #{@stats.ap_str}")
     end
 
-  end
+  end # class Romad
 
-  def self.daemon
-    p = Process.fork {
-      pid=Process.setsid
-      Signal.trap(:INT){
-        exit! 0
-      }
-      Signal.trap(:TERM){
-        exit! 0       
-      }
-      Signal.trap(:HUP){
-        exit! 0
-      }
-      File.open("/dev/null","r+"){|f|
-        STDIN.reopen f
-        STDOUT.reopen f
-        STDERR.reopen f
-      }
-      yield
-    }
-    $stderr.puts p
-    exit! 0
-  end
-end
-
-$roma = Roma::Romad.new(ARGV)
-if $roma.daemon?
-  Roma::daemon{ $roma.start }
-else
-  $roma.start
-end
+end # module Roma
