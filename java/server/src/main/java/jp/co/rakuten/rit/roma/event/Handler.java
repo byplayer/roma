@@ -33,12 +33,14 @@ public abstract class Handler {
 
     public static void run(final String hostName, final int port,
             final ReceiverFactory receiverFactory, 
-            final ConnectionPoolFactory connPoolFactory) throws IOException {
+            final ConnectionPoolFactory connPoolFactory, 
+            final ConnectionFactory connFactory) throws IOException {
         if (instance != null) {
             throw new IllegalStateException("EventHandler is already run.");
         }
         instance = new HandlerImpl();
-        instance.initHandler(port, receiverFactory, connPoolFactory);
+        instance.initHandler(port, receiverFactory, 
+                connPoolFactory, connFactory);
         instance.startHandler();
 
         do {
@@ -67,7 +69,8 @@ public abstract class Handler {
 
     public void initHandler(int port,
             ReceiverFactory recvFactory, 
-            ConnectionPoolFactory connPoolFactory)
+            ConnectionPoolFactory connPoolFactory,
+            ConnectionFactory connFactory)
             throws IOException {
         LOG.info("initialize Event Handler");
         serverSocketChannel = ServerSocketChannel.open();
@@ -76,6 +79,7 @@ public abstract class Handler {
         serverSocketChannel.socket().bind(new InetSocketAddress(port));
         LOG.info("bind port: " + port);
         connPool = connPoolFactory.newConnectionPool(connPoolSize);
+        connPool.setConnectionFactory(connFactory);
         LOG.info("create connection pool: " + connPoolSize);
         connExecutor = Executors.newSingleThreadExecutor();
         this.receiverFactory = recvFactory;

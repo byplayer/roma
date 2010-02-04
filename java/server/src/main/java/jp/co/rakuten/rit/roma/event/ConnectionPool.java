@@ -17,19 +17,30 @@ import org.apache.commons.pool.impl.GenericObjectPool;
 public class ConnectionPool {
 
     protected int size;
-    private HashMap<String, SocketPool> pool = new HashMap<String, SocketPool>();
+
+    private HashMap<String, CPool> cpool = new HashMap<String, CPool>();
+    
+    private ConnectionFactory connFactory = null;
 
     public ConnectionPool(final int size) {
         this.size = size;
     }
 
+    public void setConnectionFactory(ConnectionFactory connFactory) {
+        this.connFactory = connFactory;
+    }
+
+    public ConnectionFactory getConnectionFactory() {
+        return connFactory;
+    }
+
     public synchronized Connection create(String nodeID) throws IOException {
-        String[] splited = nodeID.split("_");
-        SocketPool spool = new SocketPool(splited[0], Integer
-                .parseInt(splited[1]), size);
-        pool.put(nodeID, spool);
+        String[] s = nodeID.split("_");
+        CPool cp = new CPool(s[0], Integer.parseInt(s[1]), size);
+                
+        cpool.put(nodeID, cp);
         try {
-            return new Connection(spool.get());
+            return cp.get();
         } catch (NoSuchElementException e) {
             throw new IOException(e);
         } catch (IllegalStateException e) {
@@ -40,13 +51,13 @@ public class ConnectionPool {
     }
 
     public synchronized Connection get(String nodeID) throws IOException {
-        SocketPool spool = pool.get(nodeID);
-        if (spool == null) {
+        CPool cp = cpool.get(nodeID);
+        if (cp == null) {
             return create(nodeID);
         }
-        Socket socket = null;
+        Connection conn = null;
         try {
-            socket = spool.get();
+            conn = cp.get();
         } catch (NoSuchElementException e) {
             throw new IOException(e);
         } catch (IllegalStateException e) {
@@ -56,87 +67,89 @@ public class ConnectionPool {
         } catch (Exception e) {
             throw new IOException(e);
         }
-        return new Connection(socket);
+        return conn;
     }
 
     public synchronized void put(String nodeID, Connection conn)
             throws IOException {
-        SocketPool spool = pool.get(nodeID);
+        CPool cp = cpool.get(nodeID);
         try {
-            spool.put(conn.sock);
+            cp.put(conn);
         } catch (Exception e) {
             throw new IOException(e);
         }
     }
 
     public synchronized void delete(String nodeID) {
-        SocketPool spool = pool.remove(nodeID);
+        CPool cp = cpool.remove(nodeID);
         try {
-            if (spool != null) {
-                spool.close();
+            if (cp != null) {
+                cp.close();
             }
-        } catch (IOException e) { // ignore
+        } catch (IOException e) { 
+            // ignore
             // throw new IOException(e);
         }
     }
 
     public synchronized void closeAll() {
-        for (SocketPool spool : pool.values()) {
+        for (CPool cp : cpool.values()) {
             try {
-                spool.close();
-            } catch (Exception e) { // ignore
+                cp.close();
+            } catch (Exception e) {
+                // ignore
                 // throw new IOException(e);
             }
         }
-        pool.clear();
+        cpool.clear();
     }
 
-    static class SocketPool implements Closeable {
+    class CPool implements Closeable {
 
-        private ObjectPool pool;
+        private ObjectPool opool;
 
-        public SocketPool(final String host, final int port, int max) {
-            pool = new GenericObjectPool(new PoolableObjectFactory() {
-
+        public CPool(final String host, final int port, int max) {
+            opool = new GenericObjectPool(new PoolableObjectFactory() {
                 public void destroyObject(Object obj) throws Exception {
-                    if (obj instanceof Socket) {
-                        ((Socket) obj).close();
+                    if (obj instanceof Connection) {
+                        ((Connection) obj).close();
                     }
                 }
 
                 public boolean validateObject(Object obj) {
-                    if (obj instanceof Socket) {
-                        return ((Socket) obj).isConnected();
+                    if (obj instanceof Connection) {
+                        return ((Connection) obj).sock.isConnected();
                     }
                     return false;
                 }
 
                 public Object makeObject() throws Exception {
-                    return new Socket(host, port);
+                    Socket sock = new Socket(host, port);
+                    return connFactory.newConnection(sock);
                 }
 
                 public void activateObject(Object obj) throws Exception {
-                    // do nothing
+                    // ignore
                 }
 
                 public void passivateObject(Object obj) throws Exception {
-                    // do nothing
+                    // ignore
                 }
             }, max);
         }
 
-        public Socket get() throws Exception, NoSuchElementException,
+        public Connection get() throws Exception, NoSuchElementException,
                 IllegalStateException {
-            return (Socket) pool.borrowObject();
+            return (Connection) opool.borrowObject();
         }
 
-        public void put(Socket socket) throws Exception {
-            pool.returnObject(socket);
+        public void put(Connection conn) throws Exception {
+            opool.returnObject(conn);
         }
 
         public void close() throws IOException {
             try {
-                pool.clear();
+                opool.clear();
             } catch (Exception e) {
                 throw new IOException(e);
             }

@@ -73,11 +73,13 @@ public class HandlerImpl extends Handler {
     }
 
     @Override
-    public void initHandler(int port,
+    public void initHandler(int port, 
             ReceiverFactory receiverFactory,
-            ConnectionPoolFactory connPoolFactory)
+            ConnectionPoolFactory connPoolFactory,
+            ConnectionFactory connFactory)
             throws IOException {
-        super.initHandler(port, receiverFactory, connPoolFactory);
+        super.initHandler(port, receiverFactory,
+                connPoolFactory, connFactory);
         serverSocketChannel.configureBlocking(false);
         selector = Selector.open();
         eventExecutorNumber = 100;
@@ -215,9 +217,9 @@ public class HandlerImpl extends Handler {
         }
         if (commandLine != null) {
             receiver.setCommands(commandLine);
-//             System.out.println("# cl: " + commandLine);
-//             System.out.println("# key: " + key);
-//             System.out.println("# channel: " + key.channel());
+            // System.out.println("# cl: " + commandLine);
+            // System.out.println("# key: " + key);
+            // System.out.println("# channel: " + key.channel());
             try {
                 key.cancel();
                 synchronized (reregisterChannels) {

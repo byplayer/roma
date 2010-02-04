@@ -99,9 +99,7 @@ module Roma
       end
 
       def get_connection ap
-        conn = getConnection ap
-        conn.extend(Roma::Event::ConnectionUtil)
-        conn
+        getConnection ap
       end
 
       def return_connection ap, conn
