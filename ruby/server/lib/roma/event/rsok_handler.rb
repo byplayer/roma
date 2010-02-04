@@ -10,10 +10,11 @@ module Roma
     #
     # receive a first line in memcached command in the event loop model.
     #
-    class RubySocketHandler2
+    class RubySocketHandler
       attr_writer :event_loop
 
       @@obj = nil
+      @@ev_list = nil
 
       def initialize(addr, port, storages, rttable, log)
         @addr = addr
@@ -41,7 +42,9 @@ module Roma
           }
         end
 
-        @@obj = RubySocketHandler2.new(addr, port, storages, rttable, log)
+        @@ev_list = Command::Receiver.mk_evlist
+
+        @@obj = RubySocketHandler.new(addr, port, storages, rttable, log)
         @@obj.run
       end
 
@@ -63,7 +66,7 @@ module Roma
 
       def run
         serv = TCPServer.new(@addr, @port)
-        @log.info("Now accepting connections on address #{@addr}, port #{@port} in the RubySocketHandler2.")
+        @log.info("Now accepting connections on address #{@addr}, port #{@port} in the RubySocketHandler.")
 
         @reads = [serv]
         @event_loop = true
@@ -78,6 +81,7 @@ module Roma
             end            
           end
 @log.debug("queue = #{@queue.inspect}") if @queue.length > 0
+
           next unless s = select(@reads,[],[],0.1)
           s[0].each{|sock|
             if sock==serv
@@ -98,7 +102,16 @@ module Roma
               cmds = cmd.chomp.split(/ /) # parse a command
               next if cmds.length==0
 
-              if cmds[0]=="set"
+              method = @@ev_list[cmds[0]]
+              unless method
+                @log.warn("command error:#{cmds.inspect}")
+                sock.write("ERROR\r\n")
+                close_session(sock)
+                next
+              end
+
+              if method.to_s.start_with?("exev_")
+                # exclusive command execution
                 unless @keys.key?(cmds[1])
                   @keys[cmds[1]] = [sock,cmds]
                   @reads.delete(sock)
@@ -108,6 +121,7 @@ module Roma
                   @queue.push [sock,cmds]
                 end
               else
+                # concurrent command execution
                 @reads.delete(sock)
                 exec(sock,cmds)
               end
@@ -151,7 +165,7 @@ module Roma
         session = @session_pool[sock]
         receiver = @receiver_pool[sock]
 
-        if cmds[0] && receiver.ev_list.key?(cmds[0].downcase)
+        if cmds[0] && @@ev_list.key?(cmds[0].downcase)
           invok_cmd(receiver, session, cmds)
         elsif cmds[0]=='!!' && session.last_cmd
           session.send_data(session.last_cmd.join(' ')+"\r\n") # command echo
@@ -168,9 +182,9 @@ module Roma
 # @log.debug(cmds[0].downcase)
         Thread.new{
           begin
-            receiver.send(receiver.ev_list[cmds[0].downcase],cmds)
-            
-            @keys.delete(cmds[1]) if cmds[0]=="set"
+            method = @@ev_list[cmds[0].downcase]
+            receiver.send(method, cmds)
+            @keys.delete(cmds[1]) if method.to_s.start_with?("exev_")
 
             session.last_cmd = cmds
 

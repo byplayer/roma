@@ -10,8 +10,6 @@ module Roma
   module Command
 
     class Receiver
-      @@ev_list={}
-
       include SystemCommandReceiver
       include BackgroundCommandReceiver
       include RoutingCommandReceiver
@@ -27,14 +25,14 @@ module Roma
         @defhash = 'roma'
         @log = Roma::Logging::RLogger.instance
         @session = session
+      end
 
-        unless has_event?
-          public_methods.each{|m|
-            if m.to_s.start_with?('ev_')
-              add_event(m.to_s[3..-1],m)
-            end
-          }
-        end
+      def self.mk_evlist
+        ev_list = {}
+        Receiver.public_instance_methods.each{|m|
+          ev_list[$1] = m if m.to_s =~ /^(?:ex)?ev_(.+)$/
+        }
+        ev_list
       end
 
       def stop_event_loop
@@ -63,18 +61,6 @@ module Roma
 
       def close_connection_after_writing
         @session.close_connection_after_writing
-      end
-
-      def has_event?
-        @@ev_list.length!=0
-      end
-
-      def add_event(c,m)
-        @@ev_list[c]=m
-      end
-
-      def ev_list
-        @@ev_list
       end
 
     end # class Receiver < Roma::Event::Handler
