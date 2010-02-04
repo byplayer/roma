@@ -5,27 +5,6 @@ module Roma
 
     module VnodeCommandReceiver
 
-      # pushv <hash-name> <vnode-id>
-      # src                             dst
-      #  |   ['pushv' <hname> <vn>\r\n]->|
-      #  |<-['READY'\r\n]                |
-      #  |               [<length>\r\n]->|
-      #  |                 [<dump>\r\n]->|
-      #  |                  ['END'\r\n]->|
-      #  |<-['STORED'\r\n]               |
-      def ev_pushv(s)
-        send_data("READY\r\n")
-        len = gets
-        res = em_receive_dump(s[1], len.to_i)
-        if res == true
-          send_data("STORED\r\n")
-        else
-          send_data("SERVER_ERROR #{res}\r\n")
-        end
-      rescue => e
-        @log.error("#{e}\n#{$@}")
-      end
-
       # spushv <hash-name> <vnode-id>
       # src                             dst
       #  |  ['spushv' <hname> <vn>\r\n]->|
@@ -49,7 +28,10 @@ module Roma
           vlen, =  vlen_bin.unpack('N')
           if vlen != 0
             v = read_bytes(vlen, 100)
-            
+
+            #
+            # lock
+            #
             if @storages[s[1]].load_stream_dump(vn, last, clk, expt, k, v)
               count += 1
 #              @log.debug("#{__method__}:[#{vn} #{last} #{clk} #{expt} #{k}] was stored.")
@@ -58,6 +40,9 @@ module Roma
 #              @log.warn("#{__method__}:[#{vn} #{last} #{clk} #{expt} #{k}] was rejected.")
             end
           else
+            #
+            # lock
+            #
             if @storages[s[1]].load_stream_dump(vn, last, clk, expt, k, nil)
 #              @log.debug("#{__method__}:[#{vn} #{last} #{clk} #{expt} #{k}] was stored.")
               count += 1
@@ -66,10 +51,16 @@ module Roma
 #              @log.warn("#{__method__}:[#{vn} #{last} #{clk} #{expt} #{k}] was rejected.")
             end
           end
+          #
+          # unlock
+          #
         }
         send_data("STORED\r\n")
         @log.debug("#{__method__}:#{s[2]} #{count} keys loaded. #{rcount} keys rejected.")
       rescue => e
+        #
+        # unlock
+        #
         @log.error("#{e}\n#{$@}")
       ensure
         @stats.run_receive_a_vnode = false
@@ -96,28 +87,6 @@ module Roma
       rescue =>e
         @log.error("#{e}\n#{$@}")
       end
-
-      def em_receive_dump(hname, len)
-        dmp = read_bytes(len)
-        read_bytes(2)
-        if gets == "END\r\n"
-          if @storages.key?(hname)
-            n = @storages[hname].load(dmp)
-            @log.debug("#{dmp.length} bytes received.(#{n} keys loaded.)")
-            return true
-          else
-            @log.error("receive_dump:@storages[#{hname}] dose not found.")
-            return "@storages[#{hname}] dose not found."
-          end
-        else
-          @log.error("receive_dump:END was not able to be received.")
-          return "END was not able to be received."
-        end
-      rescue =>e
-        @log.error("#{e}\n#{$@}")
-        "#{e}"
-      end
-      private :em_receive_dump
 
     end # module VnodeCommandReceiver
 

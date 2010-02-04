@@ -345,10 +345,7 @@ module Roma
         @log.warn("acquire_vnode:sample_vnode dose not found")
         return false
       end
-      #
-      # tunning point
-      # sleep 0.1
-      #
+
       req_push_a_vnode(vn, nodes[0], rand(@rttable.rn) == 0)
     end
  
@@ -577,33 +574,6 @@ module Roma
       nodes
     end
 
-    def push_a_vnode(hname, vn, nid)
-      dmp = @storages[hname].dump(vn)
-      unless dmp
-        @log.info("hname=#{hname} vn=#{vn} has a empty data.")
-        return "STORED"
-      end
-      con = Config::HANDLER_CLASS::con_pool.get_connection(nid)
-      con.write("pushv #{hname} #{vn}\r\n")
-      res = con.gets # READY\r\n or error string
-      if res != "READY\r\n"
-        con.close
-        return res.chomp
-      end
-      con.write("#{dmp.length}\r\n#{dmp}\r\nEND\r\n")
-      res = con.gets # STORED\r\n or error string
-
-      Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
-      res.chomp! if res
-      res
-    rescue Errno::EPIPE
-      @log.debug("Errno::EPIPE retry")
-      retry
-    rescue =>e
-      @log.error("#{e.inspect}\n#{$@}")
-      "#{e}"
-    end
- 
     def push_a_vnode_stream(hname, vn, nid)
       @stats.run_iterate_storage = true
       @log.info("push_a_vnode_stream:hname=#{hname} vn=#{vn} nid=#{nid}")
@@ -634,7 +604,6 @@ module Roma
     ensure
       @stats.run_iterate_storage = false
     end
-
 
     def asyncev_start_storage_clean_up_process(args)
 #      @log.info("#{__method__}")
@@ -689,7 +658,6 @@ module Roma
         @log.info("#{__method__}:#{count} keys deleted.")
       end
     end
-
 
   end # module AsyncProcess
 
