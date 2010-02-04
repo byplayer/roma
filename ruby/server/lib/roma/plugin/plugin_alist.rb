@@ -37,7 +37,7 @@ module Roma
       # alist_clear <key> [forward]\r\n
       #
       # (CLEARED|NOT_CLEARED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_clear(s)
+      def exev_alist_clear(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         return forward2(nodes[0], s) if nodes[0] != @nid
 
@@ -65,7 +65,7 @@ module Roma
       # <data block>\r\n
       #
       # (DELETED|NOT_DELETED|NOT_FOUND|SERVER_ERROR <error message>)\r\n
-      def ev_alist_delete(s)
+      def exev_alist_delete(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[2].to_i)
         read_bytes(2)
@@ -102,7 +102,7 @@ module Roma
       # alist_delete_at <key> <index> [forward]\r\n
       #
       # (DELETED|NOT_DELETED|NOT_FOUND|SERVER_ERROR <error message>)\r\n
-      def ev_alist_delete_at(s)
+      def exev_alist_delete_at(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         return forward2(nodes[0], s) if nodes[0] != @nid
         
@@ -161,7 +161,7 @@ module Roma
       # <value>\r\n]
       # END\r\n
       # |SERVER_ERROR <error message>\r\n)
-      def ev_alist_first(s)
+      def exev_alist_first(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         return forward1(nodes[0], s) if nodes[0] != @nid
 
@@ -337,7 +337,7 @@ module Roma
       # <data block>\r\n
       #
       # (STORED|NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_insert(s)
+      def exev_alist_insert(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[3].to_i)
         read_bytes(2)
@@ -368,13 +368,13 @@ module Roma
         @log.error("#{e} #{$@}")
       end
 
-      def ev_alist_sized_prepend(s); ev_alist_sized_insert(s); end
+      def exev_alist_sized_prepend(s); ev_alist_sized_insert(s); end
 
       # alist_sized_insert <key> <array-size> <bytes> [forward]\r\n
       # <data block>\r\n
       #
       # (STORED|NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_sized_insert(s)
+      def exev_alist_sized_insert(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[3].to_i)
         read_bytes(2)
@@ -408,13 +408,13 @@ module Roma
         @log.error("#{e} #{$@}")
       end
 
-      def ev_alist_delete_and_prepend(s); ev_alist_swap_and_insert(s); end
+      def exev_alist_delete_and_prepend(s); ev_alist_swap_and_insert(s); end
 
       # alist_swap_and_insert <key> <bytes> [forward]\r\n
       # <data block>\r\n
       #
       # (STORED|NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_swap_and_insert(s)
+      def exev_alist_swap_and_insert(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[2].to_i)
         read_bytes(2)
@@ -453,13 +453,13 @@ module Roma
         @log.error("#{e} #{$@}")
       end
 
-      def ev_alist_sized_delete_and_prepend(s); ev_alist_swap_and_sized_insert(s); end
+      def exev_alist_sized_delete_and_prepend(s); ev_alist_swap_and_sized_insert(s); end
 
       # alist_swap_and_sized_insert <key> <array-size> <bytes> [forward]\r\n
       # <data block>\r\n
       #
       # (STORED|NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_swap_and_sized_insert(s)
+      def exev_alist_swap_and_sized_insert(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[3].to_i)
         read_bytes(2)
@@ -510,7 +510,7 @@ module Roma
       # 'd' as +expire-time+ suffix is day. 
       #
       # (STORED|NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_expired_swap_and_insert(s)
+      def exev_alist_expired_swap_and_insert(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[3].to_i)
         read_bytes(2)
@@ -558,7 +558,7 @@ module Roma
       # 'd' as +expire-time+ suffix is day. 
       #
       # (STORED|NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_expired_swap_and_sized_insert(s)
+      def exev_alist_expired_swap_and_sized_insert(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[4].to_i)
         read_bytes(2)
@@ -611,7 +611,7 @@ module Roma
       # <time string>\r\n]
       # END\r\n
       # |SERVER_ERROR <error message>\r\n)
-      def ev_alist_join_with_time(s)
+      def exev_alist_join_with_time(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[2].to_i)
         read_bytes(2)
@@ -790,7 +790,7 @@ module Roma
       # <value>\r\n]
       # END
       # |NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_pop(s)
+      def exev_alist_pop(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         return forward1(nodes[0], s) if nodes[0] != @nid
 
@@ -825,7 +825,7 @@ module Roma
       # <data block>\r\n
       #
       # (STORED|NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_push(s)
+      def exev_alist_push(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[2].to_i)
         read_bytes(2)
@@ -863,7 +863,7 @@ module Roma
       # <data block>\r\n
       #
       # (STORED|NOT_PUSHED|NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_sized_push(s)
+      def exev_alist_sized_push(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[3].to_i)
         read_bytes(2)
@@ -904,7 +904,7 @@ module Roma
       # <data block>\r\n
       #
       # (STORED|NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_swap_and_push(s)
+      def exev_alist_swap_and_push(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[2].to_i)
         read_bytes(2)
@@ -945,7 +945,7 @@ module Roma
       # <data block>\r\n
       #
       # (STORED|NOT_PUSHED|NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_swap_and_sized_push(s)
+      def exev_alist_swap_and_sized_push(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[3].to_i)
         read_bytes(2)
@@ -998,7 +998,7 @@ module Roma
       # 'd' as +expire-time+ suffix is day. 
       #
       # (STORED|NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_expired_swap_and_push(s)
+      def exev_alist_expired_swap_and_push(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[3].to_i)
         read_bytes(2)
@@ -1044,7 +1044,7 @@ module Roma
       # 'd' as +expire-time+ suffix is day. 
       #
       # (STORED|NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_expired_swap_and_sized_push(s)
+      def exev_alist_expired_swap_and_sized_push(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         data = read_bytes(s[4].to_i)
         read_bytes(2)
@@ -1093,7 +1093,7 @@ module Roma
       # <value>\r\n]
       # END
       # |NOT_STORED|SERVER_ERROR <error message>)\r\n
-      def ev_alist_shift(s)
+      def exev_alist_shift(s)
         hname, k, d, vn, nodes = calc_hash(s[1])
         return forward1(nodes[0], s) if nodes[0] != @nid
 

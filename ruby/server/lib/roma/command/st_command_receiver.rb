@@ -11,14 +11,14 @@ module Roma
       # "set" means "store this data".
       # <command name> <key> <flags> <exptime> <bytes> [noreply]\r\n
       # <data block>\r\n
-      def ev_set(s); set(:set,s); end
-      def ev_fset(s); fset(:set,s); end
+      def exev_set(s); set(:set,s); end
+      def exev_fset(s); fset(:set,s); end
 
       # rset <key> <hash value> <timelimit> <length>
       # "set" means "store this data".
       # <command name> <key> <digest> <exptime> <bytes> [noreply]\r\n
       # <data block>\r\n
-      def ev_rset(s)
+      def exev_rset(s)
         key,hname = s[1].split("\e")
         hname ||= @defhash
         d = s[2].to_i
@@ -41,7 +41,7 @@ module Roma
 
       # <command name> <key> <digest> <exptime> <bytes> [noreply]\r\n
       # <compressed data block>\r\n
-      def ev_rzset(s)
+      def exev_rzset(s)
         key,hname = s[1].split("\e")
         hname ||= @defhash
         d = s[2].to_i
@@ -163,7 +163,7 @@ module Roma
 
 
       # delete <key> [<time>] [noreply]\r\n
-      def ev_delete(s)
+      def exev_delete(s)
         key,hname = s[1].split("\e")
         hname ||= @defhash
         d = Digest::SHA1.hexdigest(key).hex % @rttable.hbits
@@ -197,7 +197,7 @@ module Roma
       end
 
       # fdelete <key> [<time>] [noreply]\r\n
-      def ev_fdelete(s)
+      def exev_fdelete(s)
         key,hname = s[1].split("\e")
         hname ||= @defhash
         d = Digest::SHA1.hexdigest(key).hex % @rttable.hbits
@@ -225,7 +225,7 @@ module Roma
       end
 
       # rdelete <key> <clock>
-      def ev_rdelete(s)
+      def exev_rdelete(s)
         key,hname = s[1].split("\e")
         hname ||= @defhash
         d = Digest::SHA1.hexdigest(key).hex % @rttable.hbits
@@ -242,7 +242,7 @@ module Roma
       end
 
       # out <key> <vn>
-      def ev_out(s)
+      def exev_out(s)
         key,hname = s[1].split("\e")
         hname ||= @defhash
         if s.length >= 3
@@ -262,32 +262,32 @@ module Roma
       # "add" means that "add a new data to a store"
       # <command name> <key> <flags> <exptime> <bytes> [noreply]\r\n
       # <data block>\r\n
-      def ev_add(s); set(:add,s); end
-      def ev_fadd(s); fset(:add,s); end
+      def exev_add(s); set(:add,s); end
+      def exev_fadd(s); fset(:add,s); end
 
       # "replace" means that "replace the previous data with a new one"
       # <command name> <key> <flags> <exptime> <bytes> [noreply]\r\n
       # <data block>\r\n
-      def ev_replace(s); set(:replace,s); end
-      def ev_freplace(s); fset(:replace,s); end
+      def exev_replace(s); set(:replace,s); end
+      def exev_freplace(s); fset(:replace,s); end
 
       # "append" means that "append a new data to the previous one"
       # <command name> <key> <flags> <exptime> <bytes> [noreply]\r\n
       # <data block>\r\n
-      def ev_append(s); set(:append,s); end
-      def ev_fappend(s); fset(:append,s); end
+      def exev_append(s); set(:append,s); end
+      def exev_fappend(s); fset(:append,s); end
 
       # "prepend" means that "prepend a new data to the previous one"
       # <command name> <key> <flags> <exptime> <bytes> [noreply]\r\n
       # <data block>\r\n
-      def ev_prepend(s); set(:prepend,s); end
-      def ev_fprepend(s); fset(:prepend,s); end
+      def exev_prepend(s); set(:prepend,s); end
+      def exev_fprepend(s); fset(:prepend,s); end
 
 
       # "cas" means that "store this data but only if no one else has updated since I last fetched it."
       # <command name> <key> <flags> <exptime> <bytes> <cas-id>[noreply]\r\n
       # <data block>\r\n
-      def ev_cas(s)
+      def exev_cas(s)
         key,hname = s[1].split("\e")
         hname ||= @defhash
         d = Digest::SHA1.hexdigest(key).hex % @rttable.hbits
@@ -307,7 +307,7 @@ module Roma
         store_cas(hname, vn, key, d, s[5].to_i, s[3].to_i, v, nodes[1..-1])
       end
 
-      def ev_fcas(s)
+      def exev_fcas(s)
         key,hname = s[1].split("\e")
         hname ||= @defhash
         d = s[2].to_i
@@ -326,12 +326,12 @@ module Roma
       end
 
       # incr <key> <value> [noreply]\r\n
-      def ev_incr(s); incr_decr(:incr,s); end
-      def ev_fincr(s); fincr_fdecr(:incr,s); end
+      def exev_incr(s); incr_decr(:incr,s); end
+      def exev_fincr(s); fincr_fdecr(:incr,s); end
 
       # decr <key> <value> [noreply]\r\n
-      def ev_decr(s); incr_decr(:decr,s); end
-      def ev_fdecr(s); fincr_fdecr(:decr,s); end
+      def exev_decr(s); incr_decr(:decr,s); end
+      def exev_fdecr(s); fincr_fdecr(:decr,s); end
 
       # set_size_of_zredundant <n>
       def ev_set_size_of_zredundant(s)
