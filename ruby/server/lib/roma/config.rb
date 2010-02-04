@@ -3,7 +3,7 @@ require 'roma/routing/cb_rttable'
 require 'roma/storage/rh_storage'
 require 'roma/event/handler'
 require 'roma/event/rsok_handler'
-require 'roma/event/j_handler'
+require 'roma/event/j_handler' if defined? JRUBY_VERSION
 
 module Roma
 
@@ -23,7 +23,7 @@ module Roma
 
     # network event handler setting
     # HANDLER_CLASS = Roma::Event::Handler
-#    HANDLER_CLASS = Roma::Event::RubySocketHandler2
+    # HANDLER_CLASS = Roma::Event::RubySocketHandler
     HANDLER_CLASS = Roma::Event::JavaHandler
 
     # routing setting
