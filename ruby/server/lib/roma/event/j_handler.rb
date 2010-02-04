@@ -11,7 +11,7 @@ module Roma
       
       def get_connection ap
         conn = get ap
-        conn.extend(ConnectionUtil)
+        conn.extend(Roma::Event::ConnectionUtil)
         conn
       end
       
