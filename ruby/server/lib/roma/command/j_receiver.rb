@@ -23,7 +23,7 @@ module Roma
       end
 
       def initReceiver sess
-        Roma::Command::JavaReceiver.new sess
+        JavaReceiver.new sess
       end
 
       def postReceiverInit recv
@@ -40,12 +40,12 @@ module Roma
     class JavaReceiver < Java::jp.co.rakuten.rit.roma.event.Receiver
       @@ev_list={}
 
-      include Roma::Command::SystemCommandReceiver
-      include Roma::Command::BackgroundCommandReceiver
-      include Roma::Command::RoutingCommandReceiver
-      include Roma::Command::StorageCommandReceiver
-      include Roma::Command::UtilCommandReceiver
-      include Roma::Command::MultiHashCommandReceiver
+      include SystemCommandReceiver
+      include BackgroundCommandReceiver
+      include RoutingCommandReceiver
+      include StorageCommandReceiver
+      include UtilCommandReceiver
+      include MultiHashCommandReceiver
 
       attr_accessor :storages
       attr_accessor :rttable
