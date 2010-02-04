@@ -57,6 +57,9 @@ module Roma
       def postInit
         unless has_event?
           public_methods.each{ |m|
+# for example 2010.2.4
+#            add_event($1, m) if m.to_s =~ /^(?:ex)?ev_(.+)$/
+#
             if m.to_s.start_with?('ev_')
               add_event(m.to_s[3..-1], m)
             end
