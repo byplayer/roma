@@ -6,7 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
-public class HandlerImpl2 extends Handler {
+public class HandlerImpl2 extends AbstractHandler {
 
     private static Logger LOG = Logger.getLogger(HandlerImpl2.class.getName());
 
@@ -35,17 +35,14 @@ public class HandlerImpl2 extends Handler {
 
     private ExecutorService receiverExecutor;
 
-    public HandlerImpl2() throws IOException {
+    public HandlerImpl2(final String hostName, final int port)
+            throws IOException {
+        initHandler(hostName, port);
     }
 
     @Override
-    public void initHandler(int port,
-            ReceiverFactory receiverFactory,
-            ConnectionPoolFactory connPoolFactory,
-            ConnectionFactory connFactory)
-            throws IOException {
-        super.initHandler(port, receiverFactory, connPoolFactory,
-                connFactory);
+    public void initHandler(String hostName, int port) throws IOException {
+        super.initHandler(hostName, port);
         this.receiverExecutorNumber = 100;
         receiverExecutor = Executors.newFixedThreadPool(receiverExecutorNumber);
         // receiverExecutor = Executors.newCachedThreadPool();

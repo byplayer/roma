@@ -3,15 +3,17 @@ package jp.co.rakuten.rit.roma.event;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
+public abstract class AbstractHandler {
 
-public abstract class Handler {
-
-    private static final Logger LOG =
-        Logger.getLogger(Handler.class.getName());
+    private static final Logger LOG = Logger.getLogger(AbstractHandler.class
+            .getName());
 
     class ServiceImpl implements Runnable {
 
@@ -29,60 +31,49 @@ public abstract class Handler {
         }
     }
 
-    private static Handler instance = null;
-
-    public static void run(final String hostName, final int port,
-            final ReceiverFactory receiverFactory, 
-            final ConnectionPoolFactory connPoolFactory, 
-            final ConnectionFactory connFactory) throws IOException {
-        if (instance != null) {
-            throw new IllegalStateException("EventHandler is already run.");
-        }
-        instance = new HandlerImpl();
-        instance.initHandler(port, receiverFactory, 
-                connPoolFactory, connFactory);
-        instance.startHandler();
-
-        do {
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                LOG.throwing(Handler.class.getName(), "run", e);
-            }
-        } while (enabledEventLoop);
-        instance.stopHandler();
-    }
-
     private static final int DEFAULT_BUFFER_SIZE = 8192;
 
     protected ServerSocketChannel serverSocketChannel;
 
     protected ExecutorService connExecutor;
 
-    protected static boolean enabledEventLoop;
+    protected boolean enabledEventLoop;
 
     protected ReceiverFactory receiverFactory;
-    
+
     protected int connPoolSize = 5;
 
-    private static ConnectionPool connPool;
+    private ConnectionPool connPool;
 
-    public void initHandler(int port,
-            ReceiverFactory recvFactory, 
-            ConnectionPoolFactory connPoolFactory,
-            ConnectionFactory connFactory)
+    private Map<String, String> commandMap = Collections
+            .synchronizedMap(new HashMap<String, String>());
+
+    public void run(ReceiverFactory recvFactory,
+            ConnectionPoolFactory connPoolFactory, ConnectionFactory connFactory)
             throws IOException {
+        connPool = connPoolFactory.newConnectionPool(connPoolSize);
+        connPool.setConnectionFactory(connFactory);
+        LOG.info("create connection pool: " + connPoolSize);
+        connExecutor = Executors.newSingleThreadExecutor();
+        this.receiverFactory = recvFactory;
+        startHandler();
+        do {
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                LOG.throwing(AbstractHandler.class.getName(), "run", e);
+            }
+        } while (enabledEventLoop);
+        stopHandler();
+    }
+
+    public void initHandler(String hostName, int port) throws IOException {
         LOG.info("initialize Event Handler");
         serverSocketChannel = ServerSocketChannel.open();
         // serverSocketChannel.socket().setReceiveBufferSize(DEFAULT_BUFFER_SIZE);
         // serverSocketChannel.socket().setReuseAddress(true);
         serverSocketChannel.socket().bind(new InetSocketAddress(port));
         LOG.info("bind port: " + port);
-        connPool = connPoolFactory.newConnectionPool(connPoolSize);
-        connPool.setConnectionFactory(connFactory);
-        LOG.info("create connection pool: " + connPoolSize);
-        connExecutor = Executors.newSingleThreadExecutor();
-        this.receiverFactory = recvFactory;
     }
 
     public void startHandler() throws IOException {
@@ -114,8 +105,16 @@ public abstract class Handler {
         } catch (IOException e) {
         }
     }
-    
-    public static ConnectionPool getConnectionPool() {
+
+    public void addCommandMap(String aliasName, String methodName) {
+        commandMap.put(aliasName, methodName);
+    }
+
+    public String getCommandMap(String aliasName) {
+        return commandMap.get(aliasName);
+    }
+
+    public ConnectionPool getConnectionPool() {
         return connPool;
     }
 }

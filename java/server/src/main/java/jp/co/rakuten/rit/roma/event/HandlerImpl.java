@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
-public class HandlerImpl extends Handler {
+public class HandlerImpl extends AbstractHandler {
     private static final Logger LOG = Logger.getLogger(HandlerImpl.class
             .getName());
 
@@ -32,7 +32,14 @@ public class HandlerImpl extends Handler {
                 Receiver receiver = null;
                 try {
                     receiver = eventQueue.take();
-                    receiver.execCommand();
+                    int ecode = receiver.execCommand();
+                    if (ecode < 0) {
+                        try {
+                            eventQueue.put(receiver);
+                            continue;
+                        } catch (InterruptedException e) {
+                        }
+                    }
                     SocketChannel ch = receiver.getSession().getSocketChannel();
                     synchronized (reregisterChannels) {
                         for (Iterator<ReregisterChannel> i = reregisterChannels
@@ -69,17 +76,14 @@ public class HandlerImpl extends Handler {
 
     private static Map<String, Receiver> receiverPool;
 
-    public HandlerImpl() throws IOException {
+    public HandlerImpl(final String hostName, final int port)
+            throws IOException {
+        initHandler(hostName, port);
     }
 
     @Override
-    public void initHandler(int port, 
-            ReceiverFactory receiverFactory,
-            ConnectionPoolFactory connPoolFactory,
-            ConnectionFactory connFactory)
-            throws IOException {
-        super.initHandler(port, receiverFactory,
-                connPoolFactory, connFactory);
+    public void initHandler(String hostName, int port) throws IOException {
+        super.initHandler(hostName, port);
         serverSocketChannel.configureBlocking(false);
         selector = Selector.open();
         eventExecutorNumber = 100;

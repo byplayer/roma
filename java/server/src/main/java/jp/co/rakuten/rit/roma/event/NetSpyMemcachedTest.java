@@ -8,7 +8,7 @@ import net.spy.memcached.ConnectionFactory;
 import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.MemcachedClient;
 
-public class NetSpyMemcachedClientSample {
+public class NetSpyMemcachedTest {
 
     private void big_loop(int numOfThreads, final MemcachedClient c) {
         Thread[] threads = new Thread[numOfThreads];
@@ -22,8 +22,10 @@ public class NetSpyMemcachedClientSample {
                             ConnectionFactory cf = cfb.build();
 
                             List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-//                            addresses.add(new InetSocketAddress("10.162.127.145", 11211));
-                            addresses.add(new InetSocketAddress("localhost", 11211));
+                            // addresses.add(new
+                            // InetSocketAddress("10.162.127.145", 11211));
+                            addresses.add(new InetSocketAddress("localhost",
+                                    11211));
                             MemcachedClient memc = new MemcachedClient(cf,
                                     addresses);
                             small_loop(memc);
@@ -106,7 +108,7 @@ public class NetSpyMemcachedClientSample {
     public static void main(String[] args) {
         createDummy(1024);
 
-        NetSpyMemcachedClientSample t = new NetSpyMemcachedClientSample();
+        NetSpyMemcachedTest t = new NetSpyMemcachedTest();
         MemcachedClient memc = null;
         try {
             ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder();
@@ -115,13 +117,13 @@ public class NetSpyMemcachedClientSample {
 
             List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
             addresses.add(new InetSocketAddress("localhost", 11211));
-//            addresses.add(new InetSocketAddress("10.162.127.145", 11211));
+            // addresses.add(new InetSocketAddress("10.162.127.145", 11211));
             memc = new MemcachedClient(cf, addresses);
             // memc = new MemcachedClient(new InetSocketAddress("localhost",
             // 11211));
 
-            t.big_loop(1, memc);
-//            t.big_loop(20, null);
+            t.big_loop(2, memc);
+            // t.big_loop(2, null);
 
             while (true) {
                 Thread.sleep(5 * 1000);

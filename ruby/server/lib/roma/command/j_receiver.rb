@@ -13,19 +13,17 @@ module Roma
       attr_accessor :rttable
       attr_accessor :stats
       attr_accessor :log
-      attr_accessor :ev_list
 
-      def initialize(storages, rttable, stats, log, ev_list)
+      def initialize(storages, rttable, stats, log)
         super()
         @storages = storages
         @rttable = rttable
         @stats = stats
         @log = log
-        @ev_list = ev_list
       end
 
-      def initReceiver sess
-        JavaReceiver.new sess
+      def initReceiver handler, sess
+        JavaReceiver.new handler, sess
       end
 
       def postReceiverInit recv
@@ -35,7 +33,6 @@ module Roma
         recv.nid = @stats.ap_str
         recv.defhash = 'roma'
         recv.log = @log
-        recv.ev_list = @ev_list
       end
     end
 
@@ -54,15 +51,15 @@ module Roma
       attr_accessor :nid
       attr_accessor :defhash
       attr_accessor :log
-      attr_accessor :ev_list
 
       def execCommand cmds
         s = []
         cmds.each{ |cmd|
           s << cmd
         }
-        puts "command name: #{ev_list[s[0].downcase]}"
-        self.send(@ev_list[s[0].downcase], s)
+        puts "command name: #{getCommandName(s[0].downcase)}"
+        self.send(getCommandName(s[0].downcase), s)
+#        self.send(@ev_list[s[0].downcase], s)
       end
 
       def send_data s

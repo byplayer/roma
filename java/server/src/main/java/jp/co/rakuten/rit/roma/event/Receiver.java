@@ -1,23 +1,20 @@
 package jp.co.rakuten.rit.roma.event;
 
 import java.io.IOException;
-
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class Receiver {
 
-    private Handler handler;
+    private static ConcurrentMap<String, String> keys = new ConcurrentHashMap<String, String>();
+
+    private AbstractHandler handler;
 
     private Session sess;
 
-    public Receiver(Session sess) {
-        this.sess = sess;
-    }
-
-    public void postInit() {
-    }
-
-    void setHandler(Handler handler) {
+    public Receiver(AbstractHandler handler, Session sess) {
         this.handler = handler;
+        this.sess = sess;
     }
 
     public Session getSession() {
@@ -29,18 +26,22 @@ public class Receiver {
     }
 
     public Connection getConnection(String nodeID) throws IOException {
-        return Handler.getConnectionPool().get(nodeID);
+        return handler.getConnectionPool().get(nodeID);
     }
 
     public void putConnection(String nodeID, Connection conn)
             throws IOException {
-        Handler.getConnectionPool().put(nodeID, conn);
+        handler.getConnectionPool().put(nodeID, conn);
+    }
+
+    public String getCommandName(String aliasName) {
+        return handler.getCommandMap(aliasName);
     }
 
     public void stopEventLoop() {
         handler.stopService();
     }
-    
+
     public byte[] readBytes(int len) throws IOException {
         return sess.readBytes(len);
     }
@@ -65,15 +66,32 @@ public class Receiver {
         sess.writeString(data);
     }
 
-    public void execCommand() throws IOException {
+    public int execCommand() throws IOException {
         String[] commands = sess.getCommands();
-        execCommand(commands);
+        if (commands.length != 1) {
+            if (getCommandName(commands[0]).startsWith("exev_")) {
+                if (keys.putIfAbsent(commands[1], commands[1]) == null) {
+                    int ret = execCommand(commands);
+                    if (getCommandName(commands[0]).startsWith("exev_")) {
+                        keys.remove(commands[1]);
+                    }
+                    return ret;
+                } else {
+                    return -1;
+                }
+            } else {
+                return execCommand(commands);
+            }
+        } else { // e.g. balse
+            return execCommand(commands);
+        }
     }
 
-    // public void execCommand(String[] commands) throws IOException {
+    // public int execCommand(String[] commands) throws IOException {
+    // return 0;
     // }
 
-    public void execCommand(String[] commands) throws IOException {
+    public int execCommand(String[] commands) throws IOException {
         String command = commands[0].toLowerCase();
         if (command.equals("set")) {
             execSetCommand(commands);
@@ -85,6 +103,7 @@ public class Receiver {
             execErrorCommand(commands);
             // throw new RuntimeException("Command not found");
         }
+        return 0;
     }
 
     public void execSetCommand(String[] commands) throws IOException {
@@ -103,7 +122,7 @@ public class Receiver {
     public void execGetCommand(String[] commands) throws IOException {
         // TODO
     }
-    
+
     public void execBalseCommand(String[] commands) throws IOException {
         writeString("Are you sure?(yes/no)\r\n");
         String s = gets();
@@ -116,7 +135,7 @@ public class Receiver {
     public void execErrorCommand(String[] commands) throws IOException {
         writeString("Command not found: " + commands[0] + "\r\n");
     }
-    
+
     public void closeSilently() {
         try {
             sess.close();

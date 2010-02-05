@@ -5,7 +5,20 @@ require 'roma/command/j_receiver'
 
 module Roma
   module Event
-    class JavaHandler < Java::jp.co.rakuten.rit.roma.event.Handler
+    class JavaHandlerFactory < Java::jp.co.rakuten.rit.roma.event.HandlerFactory
+      def initialize
+        super
+      end
+
+      def initHandler host, port
+        JavaHandler.new host, port
+      end
+
+    end
+
+    class JavaHandler < Java::jp.co.rakuten.rit.roma.event.HandlerImpl
+      @@instance = nil
+
       def self.start(addr, port, storages, rttable, stats, log)
         if stats.verbose
           Roma::Event::JavaSocketSession.class_eval {
@@ -19,35 +32,38 @@ module Roma
           }
         end
 
-        ev_list = JavaHandler.mk_evlist
-        recv_fact = Roma::Command::JavaRecvFactory.new storages, rttable, stats, log, ev_list
-        conn_pool_fact = JavaConnPoolFactory.new
+        handler_fact = JavaHandlerFactory.new
+        @@instance = handler_fact.newHandler addr, port.to_i
+        @@instance.mk_evlist
+        recv_fact = Roma::Command::JavaRecvFactory.new(
+          storages, rttable, stats, log)
+        connpool_fact = JavaConnPoolFactory.new
         conn_fact = JavaConnFactory.new
-        JavaHandler::run addr, port.to_i, recv_fact, conn_pool_fact, conn_fact
+        @@instance.run recv_fact, connpool_fact, conn_fact
       end
 
-      def self.mk_evlist
-        ev_list = {}
-        Roma::Command::JavaReceiver.public_instance_methods.each{|m|
-          ev_list[$1] = m if m.to_s =~ /^(?:ex)?ev_(.+)$/
+      def mk_evlist
+        Roma::Command::JavaReceiver.public_instance_methods.each{ |m|
+          if m.to_s =~ /^(?:ex)?ev_(.+)$/
+#            ev_list[$1] = m
+            addCommandMap $1, m.to_s
+          end
         }
-        ev_list
       end
 
       def self.stop
-        JavaHandler::stop
+      end
+
+      def self.con_pool
+        @@instance.getConnectionPool
       end
 
       def self.close_conpool(nid)
-
+        con_pool().close_same_host(nid)
       end
-      
+
       def self.receiver_class
         Roma::Command::JavaReceiver
-      end
-      
-      def self.con_pool
-        JavaHandler::getConnectionPool
       end
     end # class JavaHandler < Java::jp.co.rakuten.rit.roma.event.Handler
   end # module Event
