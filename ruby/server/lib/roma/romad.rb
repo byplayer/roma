@@ -223,7 +223,7 @@ module Roma
         raise "#{fname} not found." unless File::exist?(fname)
         rd = Routing::RoutingData::load(fname)
         raise "It failed in loading the routing table data." unless rd
-        @rttable = Routing::ChurnbasedRoutingTable.new(rd,fname)
+        @rttable = Config::RTTABLE_CLASS.new(rd,fname)
       end
       
       if Config.const_defined?(:ROUTING_FAIL_CNT_THRESHOLD)
