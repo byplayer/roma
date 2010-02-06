@@ -2,6 +2,7 @@ require 'roma/storage/rh_storage'
 require 'roma/event/handler'
 require 'roma/event/rsok_handler'
 require 'roma/event/j_handler' if defined? JRUBY_VERSION
+require 'roma/routing/cb_rttable'
 
 module Roma
 
@@ -25,6 +26,7 @@ module Roma
     # HANDLER_CLASS = Roma::Event::JavaHandler
 
     # routing setting
+    RTTABLE_CLASS = Roma::Routing::ChurnbasedRoutingTable
     RTTABLE_PATH = '.'
 
     # storage setting
