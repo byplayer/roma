@@ -213,7 +213,7 @@ module Roma
           }
           ret
         end
-        
+
         # +exp_hosts+:: ignore
         # +exp_nodes+:: exceptional nodes(ex.['roma0_11211'])
         def get_other_one_repethost(exp_hosts,exp_nodes)
@@ -228,7 +228,7 @@ module Roma
           hidx=@host_idx.clone
           exp_hosts.each{|h| hidx.delete(h) }
           return nil if hidx.length == 0
-          
+
           rh=hidx.keys[rand(hidx.keys.length)]
           nodes=hidx[rh]
           nodes[rand(nodes.length)]
