@@ -228,7 +228,7 @@ module Roma
         if Config.const_defined? :RTTABLE_CLASS
           @rttable = Config::RTTABLE_CLASS.new(rd,fname)
           require 'roma/routing/j_rttable'
-          Roma::Routing::JavaRoutingTable.create rd, fname
+          Roma::Routing::JavaRoutingTable.new rd, fname
         else
           @rttable = Roma::Routing::ChurnbasedRoutingTable.new(rd,fname)
         end

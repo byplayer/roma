@@ -22,8 +22,8 @@ module Roma
 
     # network event handler setting
     # HANDLER_CLASS = Roma::Event::Handler
-    HANDLER_CLASS = Roma::Event::RubySocketHandler
-    # HANDLER_CLASS = Roma::Event::JavaHandler
+    # HANDLER_CLASS = Roma::Event::RubySocketHandler
+    HANDLER_CLASS = Roma::Event::JavaHandler
 
     # routing setting
     RTTABLE_CLASS = Roma::Routing::ChurnbasedRoutingTable
