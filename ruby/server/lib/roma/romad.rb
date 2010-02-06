@@ -8,6 +8,7 @@ require 'roma/command_plugin'
 require 'roma/async_process'
 require 'roma/write_behind'
 require 'roma/logging/rlogger'
+require 'roma/routing/cb_rttable'
 require 'roma/routing/routing_data'
 require 'timeout'
 
@@ -79,9 +80,9 @@ module Roma
 
     def initialize_wb_witer
       @wb_writer = WriteBehind::FileWriter.new(
-                                                     Config::WRITEBEHIND_PATH, 
-                                                     Config::WRITEBEHIND_SHIFT_SIZE,
-                                                     @log)
+                                               Config::WRITEBEHIND_PATH, 
+                                               Config::WRITEBEHIND_SHIFT_SIZE,
+                                               @log)
     end
 
     def initialize_plugin
@@ -102,8 +103,8 @@ module Roma
 
     def initialize_logger
       Logging::RLogger.create_singleton_instance("#{Config::LOG_PATH}/#{@stats.ap_str}.log",
-                                                       Config::LOG_SHIFT_AGE,
-                                                       Config::LOG_SHIFT_SIZE)
+                                                 Config::LOG_SHIFT_AGE,
+                                                 Config::LOG_SHIFT_SIZE)
       @log = Logging::RLogger.instance
 
       if Config.const_defined? :LOG_LEVEL
@@ -223,7 +224,12 @@ module Roma
         raise "#{fname} not found." unless File::exist?(fname)
         rd = Routing::RoutingData::load(fname)
         raise "It failed in loading the routing table data." unless rd
-        @rttable = Routing::ChurnbasedRoutingTable.new(rd,fname)
+
+        if Config.const_defined? :RTTABLE_CLASS
+          @rttable = Config::RTTABLE_CLASS.new(rd,fname)
+        else
+          @rttable = Roma::Routing::ChurnbasedRoutingTable.new(rd,fname)
+        end
       end
       
       if Config.const_defined?(:ROUTING_FAIL_CNT_THRESHOLD)
