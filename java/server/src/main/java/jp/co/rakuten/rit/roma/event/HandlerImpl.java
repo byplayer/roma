@@ -16,11 +16,13 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Logger;
 
-public class HandlerImpl extends AbstractHandler {
-    private static final Logger LOG = Logger.getLogger(HandlerImpl.class
-            .getName());
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class HandlerImpl extends HandlerBase {
+    private static final Logger LOG =
+        LoggerFactory.getLogger(HandlerImpl.class);
 
     class CommandTaskImpl implements Runnable {
 
@@ -123,7 +125,7 @@ public class HandlerImpl extends AbstractHandler {
         try {
             startEventLoop();
         } catch (Exception e) {
-            LOG.throwing(this.getClass().getName(), "startService", e);
+            LOG.error("001", e);
         } finally {
             close();
         }
@@ -196,11 +198,11 @@ public class HandlerImpl extends AbstractHandler {
             createReceiver(channel);
             LOG.info("open connection: " + channel);
         } catch (ClosedChannelException e) {
-            LOG.throwing(this.getClass().getName(), "handleAcceptable", e);
+            LOG.error("002", e);
             key.cancel();
             throw e;
         } catch (IOException e) {
-            LOG.throwing(this.getClass().getName(), "handleAcceptable", e);
+            LOG.error("003", e);
             if (channel != null) {
                 Receiver receiver = removeReceiver(channel);
                 if (receiver != null) {
@@ -217,7 +219,9 @@ public class HandlerImpl extends AbstractHandler {
         try {
             commandLine = receiver.readLine();
         } catch (IOException e) {
-            removeReceiver(channel);
+            if (receiver != null) {
+                receiver.closeSilently();
+            }
         }
         if (commandLine != null) {
             receiver.setCommands(commandLine);
@@ -233,7 +237,7 @@ public class HandlerImpl extends AbstractHandler {
                 eventQueue.put(receiver);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-                LOG.throwing(this.getClass().getName(), "handleReadable", e);
+                LOG.error("004", e);
             }
         }
     }

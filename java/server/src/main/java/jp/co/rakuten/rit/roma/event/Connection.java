@@ -11,10 +11,6 @@ import java.nio.ByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * A connection to a ROMA process.
- * 
- */
 public class Connection {
     private static Logger LOG = LoggerFactory.getLogger(Connection.class);
 
@@ -104,12 +100,6 @@ public class Connection {
         writeBytes(data.getBytes());
     }
 
-    /**
-     * Close this connection.
-     * 
-     * @throws IOException -
-     *             if closing this connection fails
-     */
     public void close() throws IOException {
         if (in != null) {
             in.close();

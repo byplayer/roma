@@ -10,11 +10,14 @@ import java.util.NoSuchElementException;
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
  */
 public class ConnectionPool {
+    private static Logger LOG = LoggerFactory.getLogger(ConnectionPool.class);
 
     protected int size;
 

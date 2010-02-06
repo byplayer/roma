@@ -4,15 +4,20 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Receiver {
+    private static final Logger LOG =
+        LoggerFactory.getLogger(Receiver.class);
 
     private static ConcurrentMap<String, String> keys = new ConcurrentHashMap<String, String>();
 
-    private AbstractHandler handler;
+    private HandlerBase handler;
 
     private Session sess;
 
-    public Receiver(AbstractHandler handler, Session sess) {
+    public Receiver(HandlerBase handler, Session sess) {
         this.handler = handler;
         this.sess = sess;
     }
@@ -68,19 +73,16 @@ public class Receiver {
 
     public int execCommand() throws IOException {
         String[] commands = sess.getCommands();
-        if (commands.length != 1) {
-            if (getCommandName(commands[0]).startsWith("exev_")) {
-                if (keys.putIfAbsent(commands[1], commands[1]) == null) {
-                    int ret = execCommand(commands);
-                    if (getCommandName(commands[0]).startsWith("exev_")) {
-                        keys.remove(commands[1]);
-                    }
-                    return ret;
-                } else {
-                    return -1;
+        if (commands.length != 1
+                && getCommandName(commands[0]).startsWith("exev_")) {
+            if (keys.putIfAbsent(commands[1], commands[1]) == null) {
+                int ret = execCommand(commands);
+                if (getCommandName(commands[0]).startsWith("exev_")) {
+                    keys.remove(commands[1]);
                 }
+                return ret;
             } else {
-                return execCommand(commands);
+                return -1;
             }
         } else { // e.g. balse
             return execCommand(commands);

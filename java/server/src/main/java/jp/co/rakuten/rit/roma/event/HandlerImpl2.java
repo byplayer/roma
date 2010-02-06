@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Logger;
 
-public class HandlerImpl2 extends AbstractHandler {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    private static Logger LOG = Logger.getLogger(HandlerImpl2.class.getName());
+public class HandlerImpl2 extends HandlerBase {
+
+    private static Logger LOG =
+        LoggerFactory.getLogger(HandlerImpl2.class);
 
     class ReceiverTaskImpl implements Runnable {
         private Receiver receiver;
@@ -25,7 +28,7 @@ public class HandlerImpl2 extends AbstractHandler {
                     receiver.setCommands(commandLine);
                     receiver.execCommand();
                 } catch (IOException e) {
-                    LOG.throwing(this.getClass().getName(), "run", e);
+                    LOG.error("001", e);
                 }
             }
         }
@@ -68,7 +71,7 @@ public class HandlerImpl2 extends AbstractHandler {
         try {
             startEventLoop();
         } catch (Exception e) {
-            LOG.throwing(this.getClass().getName(), "startService", e);
+            LOG.error("002", e);
         } finally {
             close();
         }
@@ -84,7 +87,7 @@ public class HandlerImpl2 extends AbstractHandler {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                LOG.throwing(this.getClass().getName(), "startEventLoop", e);
+                LOG.error("003", e);
                 return;
             }
             Receiver receiver = createReceiver(channel);

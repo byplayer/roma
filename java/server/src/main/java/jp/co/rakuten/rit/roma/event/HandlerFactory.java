@@ -2,12 +2,17 @@ package jp.co.rakuten.rit.roma.event;
 
 import java.io.IOException;
 
-public class HandlerFactory {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    public AbstractHandler newHandler(final String hostName, final int port)
+public class HandlerFactory {
+    private static final Logger LOG =
+        LoggerFactory.getLogger(HandlerFactory.class);
+
+    public HandlerBase newHandler(final String hostName, final int port)
             throws IOException {
         preHandlerInit();
-        AbstractHandler handler = initHandler(hostName, port);
+        HandlerBase handler = initHandler(hostName, port);
         postHandlerInit(handler);
         return handler;
     }
@@ -15,11 +20,11 @@ public class HandlerFactory {
     public void preHandlerInit() {
     }
 
-    public AbstractHandler initHandler(final String hostName, final int port)
+    public HandlerBase initHandler(final String hostName, final int port)
             throws IOException {
         return new HandlerImpl(hostName, port);
     }
 
-    public void postHandlerInit(AbstractHandler handler) {
+    public void postHandlerInit(HandlerBase handler) {
     }
 }

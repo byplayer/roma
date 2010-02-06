@@ -45,7 +45,6 @@ module Roma
       def mk_evlist
         Roma::Command::JavaReceiver.public_instance_methods.each{ |m|
           if m.to_s =~ /^(?:ex)?ev_(.+)$/
-#            ev_list[$1] = m
             addCommandMap $1, m.to_s
           end
         }

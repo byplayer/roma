@@ -5,10 +5,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Session {
-    private static final Logger LOG = Logger.getLogger(Session.class.getName());
+    private static final Logger LOG =
+        LoggerFactory.getLogger(Session.class);
 
     private static final byte[] CRLF = new byte[] { '\r', '\n' };
 

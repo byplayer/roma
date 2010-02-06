@@ -29,8 +29,10 @@ public class NetSpyMemcachedTest {
                             MemcachedClient memc = new MemcachedClient(cf,
                                     addresses);
                             small_loop(memc);
+                            memc.shutdown();
                         } else {
                             small_loop(c);
+                            c.shutdown();
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -123,7 +125,7 @@ public class NetSpyMemcachedTest {
             // 11211));
 
             t.big_loop(2, memc);
-            // t.big_loop(2, null);
+//             t.big_loop(2, null);
 
             while (true) {
                 Thread.sleep(5 * 1000);
