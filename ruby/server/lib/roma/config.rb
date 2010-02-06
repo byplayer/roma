@@ -1,5 +1,3 @@
-require 'roma/routing/rttable'
-require 'roma/routing/cb_rttable'
 require 'roma/storage/rh_storage'
 require 'roma/event/handler'
 require 'roma/event/rsok_handler'
@@ -23,11 +21,10 @@ module Roma
 
     # network event handler setting
     # HANDLER_CLASS = Roma::Event::Handler
-    # HANDLER_CLASS = Roma::Event::RubySocketHandler
-    HANDLER_CLASS = Roma::Event::JavaHandler
+    HANDLER_CLASS = Roma::Event::RubySocketHandler
+    # HANDLER_CLASS = Roma::Event::JavaHandler
 
     # routing setting
-    RTTABLE_CLASS = Roma::Routing::ChurnbasedRoutingTable
     RTTABLE_PATH = '.'
 
     # storage setting
@@ -44,7 +41,7 @@ module Roma
     DATACOPY_STREAM_COPY_WAIT_PARAM = 0.0001
 
     # plugin setting
-    PLUGIN_FILES = []
+    PLUGIN_FILES = ['plugin_alist.rb']
 
     # write-behind setting
     WRITEBEHIND_PATH = './wb'
