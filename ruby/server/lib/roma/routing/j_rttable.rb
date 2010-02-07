@@ -33,7 +33,7 @@ module Roma
       end
     end # JavaRoutingTableFactory
 
-    class JavaRT < Java::jp.co.rakuten.rit.roma.routing.RoutingTable
+    class JavaRT < Java::jp.co.rakuten.rit.roma.routing.ChurnBasedRoutingTable
       def initialize rd, fname
         super rd, fname
       end

@@ -9,7 +9,7 @@ public class ChurnBasedRoutingTable extends RoutingTable {
         LoggerFactory.getLogger(ChurnBasedRoutingTable.class);
             
     public ChurnBasedRoutingTable(String data, String fileName) {
-        super(data, fileName);
+        super(data);
         // TODO
     }
 }
