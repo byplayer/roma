@@ -5,6 +5,9 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import jp.co.rakuten.rit.roma.command.Receiver;
+import jp.co.rakuten.rit.roma.command.Session;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +30,7 @@ public class HandlerImpl2 extends HandlerBase {
                     // System.out.println("command line: " + commandLine);
                     receiver.setCommands(commandLine);
                     receiver.execCommand();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     LOG.error("001", e);
                 }
             }

@@ -9,6 +9,13 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import jp.co.rakuten.rit.roma.command.Command;
+import jp.co.rakuten.rit.roma.command.ConnectionFactory;
+import jp.co.rakuten.rit.roma.command.ConnectionPool;
+import jp.co.rakuten.rit.roma.command.ConnectionPoolFactory;
+import jp.co.rakuten.rit.roma.command.ReceiverFactory;
+import jp.co.rakuten.rit.roma.command.java.SystemCommands;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +53,11 @@ public abstract class HandlerBase {
 
     private ConnectionPool connPool;
 
-    private Map<String, String> commandMap = Collections
-            .synchronizedMap(new HashMap<String, String>());
+    private Map<String, String> commandMap =
+        Collections.synchronizedMap(new HashMap<String, String>());
+
+    private Map<String, Command> javaCommandMap =
+        Collections.synchronizedMap(new HashMap<String, Command>());
 
     public void run(ReceiverFactory recvFactory,
             ConnectionPoolFactory connPoolFactory, ConnectionFactory connFactory)
@@ -70,11 +80,16 @@ public abstract class HandlerBase {
 
     public void initHandler(String hostName, int port) throws IOException {
         LOG.info("initialize Event Handler");
+        initJavaCommands();
         serverSocketChannel = ServerSocketChannel.open();
         // serverSocketChannel.socket().setReceiveBufferSize(DEFAULT_BUFFER_SIZE);
         // serverSocketChannel.socket().setReuseAddress(true);
         serverSocketChannel.socket().bind(new InetSocketAddress(port));
         LOG.info("bind port: " + port);
+    }
+    
+    private void initJavaCommands() {
+//        addJavaCommandMap("quit", SystemCommands.QuitCommand.class);
     }
 
     public void startHandler() throws IOException {
@@ -106,13 +121,36 @@ public abstract class HandlerBase {
         } catch (IOException e) {
         }
     }
+    
+    public void addJavaCommandMap(String aliasName,
+            Class<? extends Command> commandName) {
+        if (!commandMap.containsKey(aliasName)) {
+            try { 
+                javaCommandMap.put(aliasName, commandName.newInstance());
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
+            }
+        }
+    }
+    
+    public Command getJavaCommandMap(String aliasName) {
+        return javaCommandMap.get(aliasName);
+    }
+
+    public Command removeJavaCommandMap(String aliasName) {
+        return javaCommandMap.remove(aliasName);
+    }
 
     public void addCommandMap(String aliasName, String methodName) {
         commandMap.put(aliasName, methodName);
     }
-
+    
     public String getCommandMap(String aliasName) {
         return commandMap.get(aliasName);
+    }
+
+    public String removeCommandMap(String aliasName) {
+        return commandMap.remove(aliasName);
     }
 
     public ConnectionPool getConnectionPool() {

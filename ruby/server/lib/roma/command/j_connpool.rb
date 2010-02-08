@@ -1,6 +1,6 @@
 module Roma
   module Event
-    class JavaConnPoolFactory < Java::jp.co.rakuten.rit.roma.event.ConnectionPoolFactory
+    class JavaConnPoolFactory < Java::jp.co.rakuten.rit.roma.command.ConnectionPoolFactory
       def initialize
         super
       end
@@ -10,7 +10,7 @@ module Roma
       end
     end
 
-    class JavaConnPool < Java::jp.co.rakuten.rit.roma.event.ConnectionPool
+    class JavaConnPool < Java::jp.co.rakuten.rit.roma.command.ConnectionPool
       def initialize size
         super size
       end
@@ -36,7 +36,7 @@ module Roma
       end
     end
 
-    class JavaConnFactory < Java::jp.co.rakuten.rit.roma.event.ConnectionFactory
+    class JavaConnFactory < Java::jp.co.rakuten.rit.roma.command.ConnectionFactory
       def initialize
         super
       end
@@ -46,7 +46,7 @@ module Roma
       end
     end
 
-    class JavaConn < Java::jp.co.rakuten.rit.roma.event.Connection
+    class JavaConn < Java::jp.co.rakuten.rit.roma.command.Connection
       def initialize sock
         super sock
       end

@@ -1,4 +1,4 @@
-package jp.co.rakuten.rit.roma.event;
+package jp.co.rakuten.rit.roma.command;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
