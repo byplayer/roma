@@ -2,6 +2,7 @@ package jp.co.rakuten.rit.roma.routing;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -76,21 +77,6 @@ public class RoutingTable {
         failCountThreshold = 5;
         failCountablePeriod = 0;
         failTime = new Date().getTime();
-
-        String tmp = dump();
-
-        if (data.equals(tmp)) {
-            System.out.println("data is true");
-        } else {
-            System.out.println("data is false");
-            System.out.println("1: ");
-            System.out.println(data);
-            System.out.println("2: ");
-            System.out.println(tmp);
-        }
-    }
-
-    private void makeMarkleHashTree() {
     }
 
     private Map<String, Integer> toVirtualNodeClocks(
@@ -105,7 +91,12 @@ public class RoutingTable {
         return ret;
     }
 
+    private void makeMarkleHashTree() {
+        // TODO
+    }
+
     public void getStats() {
+        // TODO
     }
 
     public List<String> getNodeIDs() {
@@ -121,7 +112,7 @@ public class RoutingTable {
         return new Integer(i).toString();
     }
 
-    public List<String> searchNodes(String virtualNodeID) {
+    public List<String> searchNodeIDs(String virtualNodeID) {
         return virtualNodeIndexes.get(virtualNodeID);
     }
 
@@ -181,9 +172,19 @@ public class RoutingTable {
         map.put("div_bits", 2);
         map.put("dgst_bits", 10);
 
-        List list = new ArrayList();
+        List<String> list = new ArrayList<String>();
+        list.add("localhost_11213");
         list.add("localhost_11211");
         list.add("localhost_11212");
+        list.add("localhost_11214");
+        System.out.println("list: " + list);
+        Object[] o = (Object[]) list.toArray();
+        list.clear();
+        Arrays.sort(o);
+        for (int i = 0; i < o.length; ++i) {
+            list.add((String)o[i]);
+        }
+        System.out.println("list: " + list);
 
         List list1 = new ArrayList();
         list1.add(map);
