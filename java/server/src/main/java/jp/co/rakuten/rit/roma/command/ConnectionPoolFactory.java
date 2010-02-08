@@ -1,4 +1,4 @@
-package jp.co.rakuten.rit.roma.event;
+package jp.co.rakuten.rit.roma.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

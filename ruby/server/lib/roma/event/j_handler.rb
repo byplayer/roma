@@ -1,6 +1,6 @@
 require 'java'
 require 'jar/ROMA-java-server-0.1.0-jar-with-dependencies.jar'
-require 'roma/event/j_connpool'
+require 'roma/command/j_connpool'
 require 'roma/command/j_receiver'
 
 module Roma

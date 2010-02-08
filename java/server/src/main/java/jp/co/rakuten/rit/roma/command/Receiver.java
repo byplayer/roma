@@ -1,8 +1,10 @@
-package jp.co.rakuten.rit.roma.event;
+package jp.co.rakuten.rit.roma.command;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import jp.co.rakuten.rit.roma.event.HandlerBase;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,12 +73,12 @@ public class Receiver {
         sess.writeString(data);
     }
 
-    public int execCommand() throws IOException {
+    public int execCommand() throws Exception {
         String[] commands = sess.getCommands();
         if (commands.length != 1
                 && getCommandName(commands[0]).startsWith("exev_")) {
             if (keys.putIfAbsent(commands[1], commands[1]) == null) {
-                int ret = execCommand(commands);
+                int ret = execCommand0(commands);
                 if (getCommandName(commands[0]).startsWith("exev_")) {
                     keys.remove(commands[1]);
                 }
@@ -85,7 +87,17 @@ public class Receiver {
                 return -1;
             }
         } else { // e.g. balse
-            return execCommand(commands);
+            return execCommand0(commands);
+        }
+    }
+    
+    private int execCommand0(String[] commands) throws Exception {
+        String commandName = commands[0].toLowerCase();
+        Command command = handler.getJavaCommandMap(commandName);
+        if (command != null) {
+            return command.execute(this, commands);
+        } else {
+            return execCommand(commands);            
         }
     }
 

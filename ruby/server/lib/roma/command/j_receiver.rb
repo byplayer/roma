@@ -8,7 +8,7 @@ require 'roma/command/mh_command_receiver'
 
 module Roma
   module Command
-    class JavaRecvFactory < Java::jp.co.rakuten.rit.roma.event.ReceiverFactory
+    class JavaRecvFactory < Java::jp.co.rakuten.rit.roma.command.ReceiverFactory
       attr_accessor :storages
       attr_accessor :rttable
       attr_accessor :stats
@@ -36,7 +36,7 @@ module Roma
       end
     end
 
-    class JavaReceiver < Java::jp.co.rakuten.rit.roma.event.Receiver
+    class JavaReceiver < Java::jp.co.rakuten.rit.roma.command.Receiver
 
       include SystemCommandReceiver
       include BackgroundCommandReceiver

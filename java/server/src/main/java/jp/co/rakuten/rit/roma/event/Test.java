@@ -1,6 +1,10 @@
 package jp.co.rakuten.rit.roma.event;
 
-public class Main {
+import jp.co.rakuten.rit.roma.command.ConnectionFactory;
+import jp.co.rakuten.rit.roma.command.ConnectionPoolFactory;
+import jp.co.rakuten.rit.roma.command.ReceiverFactory;
+
+public class Test {
 
     public static void main(String[] args) throws Exception {
         HandlerFactory handlerFactory = new HandlerFactory();
