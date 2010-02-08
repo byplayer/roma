@@ -42,7 +42,7 @@ public class SystemCommands {
         @Override
         public int execute(Receiver receiver, String[] commands)
                 throws Exception {
-            return 1;
+            return -1;
         }
     }
 
@@ -50,7 +50,7 @@ public class SystemCommands {
         @Override
         public int execute(Receiver receiver, String[] commands)
                 throws Exception {
-            return 1;
+            return -1;
         }
     }
 
@@ -58,7 +58,7 @@ public class SystemCommands {
         @Override
         public int execute(Receiver receiver, String[] commands)
                 throws Exception {
-            return 1;
+            return -1;
         }
     }
 
@@ -66,8 +66,7 @@ public class SystemCommands {
         @Override
         public int execute(Receiver receiver, String[] commands)
                 throws Exception {
-            return 1;
+            return -1;
         }
     }
-
 }
