@@ -89,7 +89,7 @@ public abstract class HandlerBase {
     }
     
     private void initJavaCommands() {
-//        addJavaCommandMap("quit", SystemCommands.QuitCommand.class);
+//        addJavaCommandMap(SystemCommands.QuitCommand.class);
     }
 
     public void startHandler() throws IOException {
@@ -122,14 +122,21 @@ public abstract class HandlerBase {
         }
     }
     
-    public void addJavaCommandMap(String aliasName,
-            Class<? extends Command> commandName) {
+    public void addJavaCommandMap(Class<? extends Command> commandName) {
+        Command command = null;
+        try {
+            command = (Command) commandName.newInstance();
+        } catch (Exception e) {
+            LOG.error("Command not found", e);
+        }
+
+        if (command == null) {
+            return;
+        }
+
+        String aliasName = command.getName();
         if (!commandMap.containsKey(aliasName)) {
-            try { 
-                javaCommandMap.put(aliasName, commandName.newInstance());
-            } catch (Exception e) {
-                LOG.error(e.getMessage(), e);
-            }
+            javaCommandMap.put(aliasName, command);
         }
     }
     

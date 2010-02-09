@@ -68,7 +68,7 @@ public class RoutingTable {
         // this.hBits = new BigInteger("2").pow(dgstBits);
         maskBits = dgstBits - divBits;
         upperBits = 64 - dgstBits;
-        nodeIDs = (List<String>) routingData.get(1);
+        nodeIDs = toNodeIDs((List<String>) routingData.get(1));
         virtualNodeIndexes = (Map<String, List<String>>) routingData.get(2);
         virtualNodeClocks = toVirtualNodeClocks((
                 Map<String, BigDecimal>) routingData.get(3));
@@ -77,6 +77,16 @@ public class RoutingTable {
         failCountThreshold = 5;
         failCountablePeriod = 0;
         failTime = new Date().getTime();
+    }
+    
+    private List<String> toNodeIDs(List<String> nodeIDs) {
+        Object[] o = (Object[]) nodeIDs.toArray();
+        nodeIDs.clear();
+        Arrays.sort(o);
+        for (int i = 0; i < o.length; ++i) {
+            nodeIDs.add((String) o[i]);
+        }
+        return nodeIDs;
     }
 
     private Map<String, Integer> toVirtualNodeClocks(

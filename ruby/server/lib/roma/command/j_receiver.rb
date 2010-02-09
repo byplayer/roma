@@ -57,9 +57,14 @@ module Roma
         cmds.each{ |cmd|
           s << cmd
         }
-#        puts "command name: #{s[0].downcase}"
+        puts "command name: #{s[0].downcase}"
 #        puts "method name: #{getCommandName(s[0].downcase)}"
-        self.send(getCommandName(s[0].downcase), s)
+        begin
+          self.send(getCommandName(s[0].downcase), s)
+        rescue => e
+          @log.error("#{e}\n#{$@}")
+          close_connection_after_writing
+        end
       end
 
       def send_data s
