@@ -6,7 +6,7 @@ public class Command {
         throw new UnsupportedOperationException();
     }
 
-    public int execute(Receiver receiver, String[] commands) throws Exception {
+    public Object execute(Receiver receiver, String[] commands) throws Exception {
         throw new UnsupportedOperationException();
     }
 }

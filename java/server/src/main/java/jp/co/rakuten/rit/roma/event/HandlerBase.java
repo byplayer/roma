@@ -23,6 +23,10 @@ public abstract class HandlerBase {
     private static final Logger LOG =
         LoggerFactory.getLogger(HandlerBase.class);
 
+    protected int connPoolSize = 5;
+
+    private ConnectionPool connPool;
+
     class ServiceImpl implements Runnable {
 
         public ServiceImpl() {
@@ -49,10 +53,6 @@ public abstract class HandlerBase {
 
     protected ReceiverFactory receiverFactory;
 
-    protected int connPoolSize = 5;
-
-    private ConnectionPool connPool;
-
     private Map<String, String> commandMap =
         Collections.synchronizedMap(new HashMap<String, String>());
 
@@ -62,9 +62,9 @@ public abstract class HandlerBase {
     public void run(ReceiverFactory recvFactory,
             ConnectionPoolFactory connPoolFactory, ConnectionFactory connFactory)
             throws IOException {
-        connPool = connPoolFactory.newConnectionPool(connPoolSize);
-        connPool.setConnectionFactory(connFactory);
-        LOG.info("create connection pool: " + connPoolSize);
+//        if (connPool != null) {
+            initConnectionPool(connPoolFactory, connFactory);
+//        }
         connExecutor = Executors.newSingleThreadExecutor();
         this.receiverFactory = recvFactory;
         startHandler();
@@ -158,6 +158,13 @@ public abstract class HandlerBase {
 
     public String removeCommandMap(String aliasName) {
         return commandMap.remove(aliasName);
+    }
+    
+    public void initConnectionPool(ConnectionPoolFactory connPoolFactory, 
+            ConnectionFactory connFactory) {
+        connPool = connPoolFactory.newConnectionPool(connPoolSize);
+        connPool.setConnectionFactory(connFactory);
+        LOG.info("create connection pool: " + connPoolSize);
     }
 
     public ConnectionPool getConnectionPool() {

@@ -11,10 +11,10 @@ public class SystemCommands {
         }
 
         @Override
-        public int execute(Receiver receiver, String[] commands)
+        public Object execute(Receiver receiver, String[] commands)
                 throws Exception {
             receiver.getSession().close();
-            return 1;
+            return null;
         }
     }
 }

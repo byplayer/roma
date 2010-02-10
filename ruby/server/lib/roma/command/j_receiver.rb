@@ -71,7 +71,7 @@ module Roma
         writeString s
       end
 
-      def read_bytes len
+      def read_bytes len, mult = 1
         bytes = readBytes len
         String.from_java_bytes bytes
       end

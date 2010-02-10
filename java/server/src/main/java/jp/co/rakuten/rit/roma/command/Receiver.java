@@ -94,18 +94,20 @@ public class Receiver {
     private int execCommand0(String[] commands) throws Exception {
         String commandName = commands[0].toLowerCase();
         Command command = handler.getJavaCommandMap(commandName);
+        Object ret;
         if (command != null) {
-            return command.execute(this, commands);
+            ret = command.execute(this, commands);
         } else {
-            return execCommand(commands);            
+            ret = execCommand(commands);
         }
+        return 0;
     }
 
     // public int execCommand(String[] commands) throws IOException {
     // return 0;
     // }
 
-    public int execCommand(String[] commands) throws IOException {
+    public Object execCommand(String[] commands) throws IOException {
         String command = commands[0].toLowerCase();
         if (command.equals("set")) {
             execSetCommand(commands);
@@ -117,7 +119,7 @@ public class Receiver {
             execErrorCommand(commands);
             // throw new RuntimeException("Command not found");
         }
-        return 0;
+        return null;
     }
 
     public void execSetCommand(String[] commands) throws IOException {
