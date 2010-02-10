@@ -29,6 +29,7 @@ module Roma
       initialize_stats
       options(argv)
       initialize_logger
+      initialize_network
       initialize_rttable
       initialize_storages
       initialize_plugin
@@ -48,7 +49,7 @@ module Roma
       start_async_process
       start_wb_process
       start_timer
-      start_network_event
+      start_network
 
       stop_async_process
       stop_wb_process
@@ -59,17 +60,21 @@ module Roma
 
     private
 
-    def start_network_event
+    def start_network
       @eventloop = true
       while(@eventloop)
         @eventloop = false
         begin
-          Config::HANDLER_CLASS::start('0.0.0.0', @stats.port, @storages, @rttable, @stats, @log)
+          Config::HANDLER_CLASS::start(@storages, @rttable, @stats, @log)
         rescue =>e
           @log.error("#{e}\n#{$@}")
           retry
         end
       end
+    end
+
+    def initialize_network
+      Config::HANDLER_CLASS::init('0.0.0.0', @stats.port)
     end
 
     def initialize_stats

@@ -15,6 +15,8 @@ module Roma
 
       @@obj = nil
       @@ev_list = nil
+      @@addr = nil
+      @@port = nil
 
       def initialize(addr, port, storages, rttable, log)
         @addr = addr
@@ -28,7 +30,15 @@ module Roma
         @queue = []
       end
 
-      def self.start(addr, port, storages, rttable, stats, log)
+      def self.init(addr, port)
+        @@addr = addr
+        @@port = port
+      end
+
+      def self.start(storages, rttable, stats, log)
+        if @@addr == nil || @@port == nil
+          throw Exception.new("self.init has not been called yet.")
+        end
         if stats.verbose
           RubySocketSession.class_eval{
             alias gets_firstline2 gets_firstline
@@ -44,7 +54,7 @@ module Roma
 
         @@ev_list = Command::Receiver.mk_evlist
 
-        @@obj = RubySocketHandler.new(addr, port, storages, rttable, log)
+        @@obj = RubySocketHandler.new(@@addr, @@port, storages, rttable, log)
         @@obj.run
       end
 

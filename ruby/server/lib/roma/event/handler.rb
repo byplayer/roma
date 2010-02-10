@@ -21,6 +21,11 @@ module Roma
       attr_accessor :timeout
       attr_reader :lastcmd
 
+      @@ev_list = Command::Receiver.mk_evlist
+
+      @@addr = nil
+      @@port = nil
+
       def initialize(storages, rttable)
         @rbuf=''
         @timeout = 10
@@ -29,7 +34,15 @@ module Roma
         @receiver = Roma::Command::Receiver.new(self, storages, rttable)
       end
 
-      def self.start(addr, port, storages, rttable, stats, log)
+      def self.init(addr, port)
+        @@addr = addr
+        @@port = port
+      end
+
+      def self.start(storages, rttable, stats, log)
+        if @@addr == nil || @@port == nil
+          throw Exception.new("self.init has not been called yet.")
+        end
         if stats.verbose
           Roma::Event::Handler.class_eval{
             alias gets2 gets
@@ -44,7 +57,8 @@ module Roma
         end
 
         EventMachine::run do
-          EventMachine.start_server(addr, port, Roma::Event::Handler, storages, rttable)        
+          EventMachine.start_server(@@addr, @@port, 
+                                    Roma::Event::Handler, storages, rttable)        
           log.info("Now accepting connections on address #{stats.address}, port #{stats.port} in the eventmachine-handler.")
         end
       end
@@ -103,13 +117,13 @@ module Roma
         while(@connected) do
           next unless s=gets
           s=s.chomp.split(/ /)
-          if s[0] && @receiver.ev_list.key?(s[0].downcase)
-            @receiver.send(@receiver.ev_list[s[0].downcase],s)
+          if s[0] && @@ev_list.key?(s[0].downcase)
+            @receiver.send(@@ev_list[s[0].downcase],s)
             @lastcmd=s
           elsif s.length==0
             next
           elsif s[0]=='!!'
-            @receiver.send(@receiver.ev_list[@lastcmd[0].downcase],@lastcmd)
+            @receiver.send(@@ev_list[@lastcmd[0].downcase],@lastcmd)
           else
             @log.warn("command error:#{s}")
             send_data("ERROR\r\n")
