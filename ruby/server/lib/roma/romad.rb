@@ -41,11 +41,9 @@ module Roma
         @log.error("#{@stats.ap_str} is already running.")
         return
       end
-
       @storages.each{|hashname,st|
         st.opendb
       }
-      
       start_async_process
       start_wb_process
       start_timer
@@ -60,6 +58,10 @@ module Roma
 
     private
 
+    def initialize_network
+      Config::HANDLER_CLASS::init('0.0.0.0', @stats.port)
+    end
+
     def start_network
       @eventloop = true
       while(@eventloop)
@@ -71,10 +73,6 @@ module Roma
           retry
         end
       end
-    end
-
-    def initialize_network
-      Config::HANDLER_CLASS::init('0.0.0.0', @stats.port)
     end
 
     def initialize_stats
@@ -511,7 +509,7 @@ module Roma
         @rttable.proc_failed(nid) if @rttable
       end
       res
-    rescue => e
+    rescue Timeout::Error, StandardError => e
       @rttable.proc_failed(nid) if @rttable
       @log.error("#{__FILE__}:#{__LINE__}:Send command failed that node-id is #{nid},command is #{cmd}.")
       nil

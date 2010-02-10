@@ -5,6 +5,8 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import jp.co.rakuten.rit.roma.command.ConnectionFactory;
+import jp.co.rakuten.rit.roma.command.ConnectionPoolFactory;
 import jp.co.rakuten.rit.roma.command.Receiver;
 import jp.co.rakuten.rit.roma.command.Session;
 
@@ -41,27 +43,31 @@ public class HandlerImpl2 extends HandlerBase {
 
     private ExecutorService receiverExecutor;
 
-    public HandlerImpl2(final String hostName, final int port)
+    public HandlerImpl2(final String hostName, final int port,
+            final ConnectionPoolFactory connPoolFactory,
+            final ConnectionFactory connFactory)
             throws IOException {
-        initHandler(hostName, port);
+        this.hostName = hostName;
+        this.port = port;
+        initConnectionPool(connPoolFactory, connFactory);
     }
 
     @Override
-    public void initHandler(String hostName, int port) throws IOException {
-        super.initHandler(hostName, port);
+    public void init() throws IOException {
+        super.init();
         this.receiverExecutorNumber = 100;
         receiverExecutor = Executors.newFixedThreadPool(receiverExecutorNumber);
         // receiverExecutor = Executors.newCachedThreadPool();
     }
 
     @Override
-    public void startHandler() throws IOException {
-        super.startHandler();
+    public void start() throws IOException {
+        super.start();
     }
 
     @Override
-    public void stopHandler() {
-        super.stopHandler();
+    public void stop() {
+        super.stop();
         if (receiverExecutor != null && !receiverExecutor.isShutdown()) {
             receiverExecutor.shutdownNow();
         }

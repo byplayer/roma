@@ -14,7 +14,6 @@ import jp.co.rakuten.rit.roma.command.ConnectionFactory;
 import jp.co.rakuten.rit.roma.command.ConnectionPool;
 import jp.co.rakuten.rit.roma.command.ConnectionPoolFactory;
 import jp.co.rakuten.rit.roma.command.ReceiverFactory;
-import jp.co.rakuten.rit.roma.command.java.SystemCommands;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,10 +21,6 @@ import org.slf4j.LoggerFactory;
 public abstract class HandlerBase {
     private static final Logger LOG =
         LoggerFactory.getLogger(HandlerBase.class);
-
-    protected int connPoolSize = 5;
-
-    private ConnectionPool connPool;
 
     class ServiceImpl implements Runnable {
 
@@ -44,6 +39,10 @@ public abstract class HandlerBase {
     }
 
     private static final int DEFAULT_BUFFER_SIZE = 8192;
+    
+    protected String hostName;
+    
+    protected int port;
 
     protected ServerSocketChannel serverSocketChannel;
 
@@ -53,21 +52,21 @@ public abstract class HandlerBase {
 
     protected ReceiverFactory receiverFactory;
 
+    protected int connPoolSize = 5;
+
+    private ConnectionPool connPool;
+
     private Map<String, String> commandMap =
         Collections.synchronizedMap(new HashMap<String, String>());
 
     private Map<String, Command> javaCommandMap =
         Collections.synchronizedMap(new HashMap<String, Command>());
 
-    public void run(ReceiverFactory recvFactory,
-            ConnectionPoolFactory connPoolFactory, ConnectionFactory connFactory)
-            throws IOException {
-//        if (connPool != null) {
-            initConnectionPool(connPoolFactory, connFactory);
-//        }
+    public void run(ReceiverFactory recvFactory) throws IOException {
+        init();
         connExecutor = Executors.newSingleThreadExecutor();
         this.receiverFactory = recvFactory;
-        startHandler();
+        start();
         do {
             try {
                 Thread.sleep(3000);
@@ -75,10 +74,10 @@ public abstract class HandlerBase {
                 LOG.error("002", e);
             }
         } while (enabledEventLoop);
-        stopHandler();
+        stop();
     }
 
-    public void initHandler(String hostName, int port) throws IOException {
+    public void init() throws IOException {
         LOG.info("initialize Event Handler");
         initJavaCommands();
         serverSocketChannel = ServerSocketChannel.open();
@@ -92,12 +91,12 @@ public abstract class HandlerBase {
 //        addJavaCommandMap(SystemCommands.QuitCommand.class);
     }
 
-    public void startHandler() throws IOException {
+    public void start() throws IOException {
         LOG.info("start Event Handler");
         connExecutor.execute(new ServiceImpl());
     }
 
-    public void stopHandler() {
+    public void stop() {
         if (connExecutor != null && !connExecutor.isShutdown()) {
             connExecutor.shutdownNow();
         }

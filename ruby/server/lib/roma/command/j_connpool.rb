@@ -56,6 +56,10 @@ module Roma
         String.from_java_bytes bytes
       end
 
+      def read len
+        read_bytes len
+      end
+
 #      def gets; gets; end
 
       def write s
