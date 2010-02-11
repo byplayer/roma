@@ -352,6 +352,7 @@ module Roma
     def req_push_a_vnode(vn, src_nid, is_primary)
       con = Config::HANDLER_CLASS::con_pool.get_connection(src_nid)
       con.write("reqpushv #{vn} #{@stats.ap_str} #{is_primary}\r\n")
+      @log.warn("req_push_a_vnode:request from #{src_nid}: vn: #{vn}")
       res = con.gets # receive 'PUSHED\r\n' | 'REJECTED\r\n'
       if res == "REJECTED\r\n"
         @log.warn("req_push_a_vnode:request was rejected from #{src_nid}.")
@@ -508,6 +509,9 @@ module Roma
       end
       nids = @rttable.search_nodes(vn)
       
+      puts "vn: #{vn}"
+      puts "nids: #{nids}"
+      puts "to_nid: #{to_nid}"
       if nids.include?(to_nid)==false || (is_primary && nids[0]!=to_nid)
 @log.debug("sync_a_vnode:#{vn} #{to_nid} #{is_primary}")
         # change routing data at the vnode and synchronize a data
@@ -555,6 +559,9 @@ module Roma
       return true
     rescue =>e
       @log.error("#{e}\n#{$@}")
+      puts "vn: #{vn}"
+      puts "nids: #{nids}"
+      puts "to_nid: #{to_nid}"
       false
     end
 

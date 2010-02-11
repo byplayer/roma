@@ -83,7 +83,7 @@ module Roma
 
     def initialize_wb_witer
       @wb_writer = WriteBehind::FileWriter.new(
-                                               Config::WRITEBEHIND_PATH, 
+                                               Config::WRITEBEHIND_PATH,
                                                Config::WRITEBEHIND_SHIFT_SIZE,
                                                @log)
     end
@@ -149,7 +149,7 @@ module Roma
       opts.on_tail("-v", "--version", "Show version") {
         puts "romad.rb #{VERSION}"; exit
       }
-      
+
       @stats.name = Config::DEFAULT_NAME
       opts.on("-n", "--name [name]") { |v| @stats.name = v }
 
@@ -165,7 +165,7 @@ module Roma
       unless @stats.port =~ /^\d+$/
         raise OptionParser::ParseError.new('Port number is not numeric.')
       end
-      
+
       @stats.join_ap.sub!(':','_') if @stats.join_ap
       if @stats.join_ap && !(@stats.join_ap =~ /^.+_\d+$/)
         raise OptionParser::ParseError.new('[address:port] can not parse.')
@@ -181,7 +181,7 @@ module Roma
       if Config.const_defined? :STORAGE_PATH
         path = "#{Config::STORAGE_PATH}/#{@stats.ap_str}"
       end
-      
+
       if Config.const_defined? :STORAGE_CLASS
         st_class = Config::STORAGE_CLASS
       end
@@ -236,7 +236,7 @@ module Roma
           @rttable = Roma::Routing::ChurnbasedRoutingTable.new(rd,fname)
         end
       end
-      
+
       if Config.const_defined?(:ROUTING_FAIL_CNT_THRESHOLD)
         @rttable.fail_cnt_threshold = Config::ROUTING_FAIL_CNT_THRESHOLD
       end
@@ -281,6 +281,8 @@ module Roma
       end
 
       @rttable = Routing::ChurnbasedRoutingTable.new(rd,fname)
+      puts "routing table:"
+      puts "#{@rttable.dump_yaml}"
       nodes = @rttable.nodes
 
       nodes.each{|nid|
@@ -314,7 +316,7 @@ module Roma
       rd = Marshal.load(rcv)
       Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
       rd
-    rescue
+    rescue => e
       nil
     end
 
@@ -452,11 +454,11 @@ module Roma
         end
         @stats.run_sync_routing = false
       }
-    end    
+    end
 
     def routing_hash_comparison(nid,id='0')
       return :skip if @stats.run_acquire_vnodes || @stats.run_recover
-      
+
       h = async_send_cmd(nid,"mklhash #{id}\r\n")
       if h && @rttable.mtree.get(id) != h
         if (id.length - 1) == @rttable.div_bits
@@ -473,12 +475,12 @@ module Roma
     def sync_routing(nid,id)
       vn = @rttable.mtree.to_vn(id)
       @log.warn("vn=#{vn} inconsistent")
-      
+
       res = async_send_cmd(nid,"getroute #{vn}\r\n")
       return unless res
       clk,*nids = res.split(' ')
       clk = @rttable.set_route(vn, clk.to_i, nids)
-      
+
       if clk.is_a?(Integer) == false
         clk,nids = @rttable.search_nodes_with_clk(vn)
         cmd = "setroute #{vn} #{clk-1}"
@@ -526,7 +528,7 @@ module Roma
       @log.error("#{e}\n#{$@}")
       nil
     end
-    
+
     def stop
       @storages.each_value{|st|
         st.closedb
