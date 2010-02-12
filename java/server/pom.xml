@@ -17,15 +17,6 @@
 			<url>http://repo2.maven.org/maven2</url>
 		</repository>
 		<repository>
-			<id>spy</id>
-			<name>Spy Repository</name>
-			<layout>default</layout>
-			<url>http://bleu.west.spy.net/~dustin/m2repo/</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-		<repository>
 			<id>local</id>
 			<url>file:m2repo</url>
 		</repository>
@@ -57,14 +48,14 @@
 			<version>1.22</version>
 		</dependency>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>3.8.2</version>
-		</dependency>
-		<dependency>
 			<groupId>spy</groupId>
 			<artifactId>memcached</artifactId>
 			<version>2.4.2</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.2</version>
 		</dependency>
 	</dependencies>
 	<build>
