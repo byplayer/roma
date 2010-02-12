@@ -68,7 +68,8 @@ module Roma
       end
 
       def send_data s
-        writeString s
+        bytes = s.to_java_bytes
+        writeBytes bytes
       end
 
       def read_bytes len, mult = 1

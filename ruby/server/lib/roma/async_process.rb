@@ -4,7 +4,7 @@ require 'digest/sha1'
 require 'roma/config'
 
 module Roma
-  
+
   class AsyncMessage
     attr_accessor :event
     attr_accessor :args
@@ -275,14 +275,14 @@ module Roma
     def acquired_recover_process
       @log.info("acquired_recover_process:start")
       exclude_nodes = @rttable.nodes
-      
+
       if @stats.enabled_repetition_host_in_routing
         exclude_nodes = [@stats.ap_str]
       else
         myhost = @stats.ap_str.split(/[:_]/)[0]
         exclude_nodes.delete_if{|nid| nid.split(/[:_]/)[0] != myhost }
       end
-      
+
       @do_acquired_recover_process = true
       loop {
         break unless @do_acquired_recover_process
@@ -306,7 +306,7 @@ module Roma
     ensure
       @do_acquired_recover_process = false
     end
- 
+
     def acquire_vnodes_process
       count = 0
       nv = @rttable.v_idx.length
@@ -329,10 +329,10 @@ module Roma
     ensure
       @do_acquire_vnodes_process = false
     end
- 
+
     def acquire_vnode
       widthout_nodes = @rttable.nodes
-      
+
       if @stats.enabled_repetition_host_in_routing
         widthout_nodes = [@stats.ap_str]
       else
@@ -348,7 +348,7 @@ module Roma
 
       req_push_a_vnode(vn, nodes[0], rand(@rttable.rn) == 0)
     end
- 
+
     def req_push_a_vnode(vn, src_nid, is_primary)
       con = Config::HANDLER_CLASS::con_pool.get_connection(src_nid)
       con.write("reqpushv #{vn} #{@stats.ap_str} #{is_primary}\r\n")
@@ -375,18 +375,18 @@ module Roma
       @rttable.proc_failed(src_nid)
       false
     end
- 
+
     def recover_process
       @log.info("recover_process:start.")
       nodes = @rttable.nodes
-      
+
       unless @stats.enabled_repetition_host_in_routing
         host = @stats.ap_str.split(/[:_]/)[0]
         nodes.delete_if{|nid| nid.split(/[:_]/)[0] == host }
       else
         nodes.delete(@stats.ap_str)
       end
-      
+
       if nodes.length == 0
         @log.error("New redundant node dose not found.")
         return
@@ -413,14 +413,14 @@ module Roma
     def release_process
       @log.info("release_process:start.")
       nodes = @rttable.nodes
-      
+
       unless @stats.enabled_repetition_host_in_routing
         host = @stats.ap_str.split(/[:_]/)[0]
         nodes.delete_if{|nid| nid.split(/[:_]/)[0] == host }
       else
         nodes.delete(@stats.ap_str)
       end
-      
+
       if nodes.length < @rttable.rn
         @log.error("Physcal node dose not found.")
         return
@@ -454,14 +454,14 @@ module Roma
       @do_release_process = false
       Config::HANDLER_CLASS::con_pool.close_all
     end
- 
+
     def sync_a_vnode_for_release(vn, to_nid, new_nids)
       if @stats.run_iterate_storage == true
         @log.warn("sync_a_vnode:already in being.#{vn} #{to_nid}")
         return false
       end
       nids = @rttable.search_nodes(vn)
-      
+
       if nids.include?(to_nid)==false || (is_primary && nids[0]!=to_nid)
 @log.debug("sync_a_vnode_for_release:#{vn} #{to_nid}")
         # change routing data at the vnode and synchronize a data
@@ -489,7 +489,7 @@ module Roma
         if clk.is_a?(Integer) == false
           clk,new_nids = @rttable.search_nodes_with_clk(vn)
         end
-        
+
         cmd = "setroute #{vn} #{clk - 1}"
         new_nids.each{ |nn| cmd << " #{nn}"}
         res = async_broadcast_cmd("#{cmd}\r\n")
@@ -508,7 +508,7 @@ module Roma
         return false
       end
       nids = @rttable.search_nodes(vn)
-      
+
       puts "vn: #{vn}"
       puts "nids: #{nids}"
       puts "to_nid: #{to_nid}"
@@ -540,7 +540,7 @@ module Roma
         if clk.is_a?(Integer) == false
           clk,nids = @rttable.search_nodes_with_clk(vn)
         end
-        
+
         cmd = "setroute #{vn} #{clk - 1}"
         nids.each{ |nn| cmd << " #{nn}"}
         res = async_broadcast_cmd("#{cmd}\r\n")
@@ -585,9 +585,9 @@ module Roma
       @stats.run_iterate_storage = true
       @log.info("push_a_vnode_stream:hname=#{hname} vn=#{vn} nid=#{nid}")
       con = Config::HANDLER_CLASS::con_pool.get_connection(nid)
-
+ 
       con.write("spushv #{hname} #{vn}\r\n")
-
+ 
       res = con.gets # READY\r\n or error string
       if res != "READY\r\n"
         con.close
@@ -600,7 +600,7 @@ module Roma
         sleep @stats.stream_copy_wait_param
       }
       con.write("\0"*20) # end of steram
-
+ 
       res = con.gets # STORED\r\n or error string
       Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
       res.chomp! if res

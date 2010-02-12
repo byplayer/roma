@@ -63,7 +63,8 @@ module Roma
 #      def gets; gets; end
 
       def write s
-        writeString s
+        bytes = s.to_java_bytes
+        writeBytes bytes
       end
     end
   end # module Event

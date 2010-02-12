@@ -10,8 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Session {
-    private static final Logger LOG =
-        LoggerFactory.getLogger(Session.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Session.class);
 
     private static final byte[] CRLF = new byte[] { '\r', '\n' };
 
@@ -67,7 +66,7 @@ public class Session {
 
     public String readLine() throws IOException {
         int count = getSocketChannel().read(tmpBuf);
-         if (count < 0) {
+        if (count < 0) {
             throw new IOException("Cannot read any bytes");
         } else if (count == 0) {
             throw new IOException("Cannot read any bytes");
@@ -144,7 +143,7 @@ public class Session {
     public void writeBytes(byte[] bytes) throws IOException {
         OutputStream out = getSocketChannel().socket().getOutputStream();
         out.write(bytes);
-        // out.flush();
+        out.flush();
     }
 
     public void writeString(String data) throws IOException {
