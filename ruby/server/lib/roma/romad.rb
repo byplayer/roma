@@ -281,8 +281,6 @@ module Roma
       end
 
       @rttable = Routing::ChurnbasedRoutingTable.new(rd,fname)
-      puts "routing table:"
-      puts "#{@rttable.dump_yaml}"
       nodes = @rttable.nodes
 
       nodes.each{|nid|
