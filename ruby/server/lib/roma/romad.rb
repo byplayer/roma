@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 require 'rubygems'
 require 'optparse'
-require 'roma/config'
 require 'roma/version'
 require 'roma/stats'
 require 'roma/command_plugin'
@@ -9,7 +8,6 @@ require 'roma/async_process'
 require 'roma/write_behind'
 require 'roma/logging/rlogger'
 require 'roma/routing/cb_rttable'
-require 'roma/routing/routing_data'
 require 'timeout'
 
 module Roma
@@ -26,8 +24,8 @@ module Roma
 
     def initialize(argv = nil)
       @stats = Roma::Stats.instance
-      initialize_stats
       options(argv)
+      initialize_stats
       initialize_logger
       initialize_network
       initialize_rttable
@@ -78,6 +76,9 @@ module Roma
     def initialize_stats
       if Config.const_defined?(:REDUNDANT_ZREDUNDANT_SIZE)
         @stats.size_of_zredundant = Config::REDUNDANT_ZREDUNDANT_SIZE
+      end
+      if Config.const_defined?(:DATACOPY_STREAM_COPY_WAIT_PARAM)
+        @stats.stream_copy_wait_param = Config::DATACOPY_STREAM_COPY_WAIT_PARAM
       end
     end
 
@@ -137,7 +138,6 @@ module Roma
 
       opts.on("-j","--join [address:port]") { |v| @stats.join_ap = v }
 
-      @stats.port = Config::DEFAULT_PORT.to_s
       opts.on("-p", "--port [PORT]") { |v| @stats.port = v }
 
       @stats.start_with_failover = false
@@ -150,7 +150,6 @@ module Roma
         puts "romad.rb #{VERSION}"; exit
       }
 
-      @stats.name = Config::DEFAULT_NAME
       opts.on("-n", "--name [name]") { |v| @stats.name = v }
 
       @stats.enabled_repetition_host_in_routing = false
@@ -158,9 +157,20 @@ module Roma
         @stats.enabled_repetition_host_in_routing = true
       }
 
+      opts.on("--config [file path of the config.rb]"){ |v| @stats.config_path = File.expand_path(v) }
+
       opts.parse!(argv)
       raise OptionParser::ParseError.new if argv.length < 1
       @stats.address = argv[0]
+
+      @stats.config_path = 'roma/config' unless @stats.config_path
+
+      unless require @stats.config_path
+        raise "config.rb has already been load outside the romad.rb."
+      end
+
+      @stats.name = Config::DEFAULT_NAME unless @stats.name
+      @stats.port = Config::DEFAULT_PORT.to_s unless @stats.port
 
       unless @stats.port =~ /^\d+$/
         raise OptionParser::ParseError.new('Port number is not numeric.')
