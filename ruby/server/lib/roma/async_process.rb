@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 require 'thread'
 require 'digest/sha1'
-require 'roma/config'
 
 module Roma
 
