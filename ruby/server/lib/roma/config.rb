@@ -1,4 +1,5 @@
 require 'roma/storage/rh_storage'
+require 'roma/storage/j_jh_storage' if defined? JRUBY_VERSION
 require 'roma/event/handler'
 require 'roma/event/rsok_handler'
 require 'roma/event/j_handler' if defined? JRUBY_VERSION
@@ -30,7 +31,7 @@ module Roma
     RTTABLE_PATH = '.'
 
     # storage setting
-    STORAGE_CLASS = Roma::Storage::RubyHashStorage
+    STORAGE_CLASS = Roma::Storage::JavaHashStorage
     STORAGE_DIVNUM = 10
     STORAGE_PATH = '.'
     STORAGE_DUMP_PATH = '/tmp'

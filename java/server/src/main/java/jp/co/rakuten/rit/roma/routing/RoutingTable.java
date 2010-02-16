@@ -23,19 +23,17 @@ public class RoutingTable {
 
     protected List<Object> routingData;
 
-    protected int dgstBits;
+    protected int dgstBits; // uint8
 
-    protected int divBits;
+    protected int divBits; // uint8
 
-    protected int redundantNum;
+    protected int redundantNum; // uint8
 
     // the range of hash values is to 2**dgstBits from zero
     // protected BigInteger hBits; // default 32
 
     // search_mask = 2**(divBits - 1) << (dgstBits - divBits)
-    protected int maskBits;
-
-    protected int upperBits;
+    protected int maskBits; // uint8
 
     protected Map<String, Integer> failCount;
 
@@ -67,7 +65,6 @@ public class RoutingTable {
         redundantNum = ((BigDecimal) map.get("rn")).intValue();
         // this.hBits = new BigInteger("2").pow(dgstBits);
         maskBits = dgstBits - divBits;
-        upperBits = 64 - dgstBits;
         nodeIDs = toNodeIDs((List<String>) routingData.get(1));
         virtualNodeIndexes = (Map<String, List<String>>) routingData.get(2);
         virtualNodeClocks = toVirtualNodeClocks((
@@ -118,7 +115,7 @@ public class RoutingTable {
     }
 
     public String getVirtualNodeID(long hash) {
-        int i = (int) ((hash << upperBits) >>> (maskBits + upperBits));
+        int i = (int) ((hash << (64 - dgstBits)) >>> (maskBits + 64 - dgstBits));
         return new Integer(i).toString();
     }
 
