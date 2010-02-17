@@ -54,9 +54,7 @@ module Roma
 
       def execCommand cmds
         s = []
-        cmds.each{ |cmd|
-          s << cmd
-        }
+        cmds.each{ |cmd| s << cmd }
         puts "command name: #{s[0].downcase}"
 #        puts "method name: #{getCommandName(s[0].downcase)}"
         begin

@@ -8,14 +8,14 @@ public class LogicalClockFactory {
         postLogicalClockInit(lclock);
         return lclock;
     }
-    
+
     public void preLogicalClockInit() {
     }
-    
+
     public LogicalClock initLogicalClock(long lc) {
         return new LamportClock(lc);
     }
-    
+
     public void postLogicalClockInit(LogicalClock lclock) {
     }
 }

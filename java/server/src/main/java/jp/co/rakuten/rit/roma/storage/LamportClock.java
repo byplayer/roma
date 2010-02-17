@@ -7,7 +7,7 @@ public class LamportClock implements LogicalClock {
     public LamportClock(long raw) {
         this.raw = raw;
     }
-    
+
     public long getRaw() {
         return raw;
     }

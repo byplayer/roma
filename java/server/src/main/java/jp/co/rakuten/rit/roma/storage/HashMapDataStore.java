@@ -1,64 +1,125 @@
 package jp.co.rakuten.rit.roma.storage;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
-public class HashMapDataStore implements DataStore {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    private String storagePathName;
+public class HashMapDataStore extends HashMap<String, DataEntry> implements
+        DataStore {
+    private static final Logger LOG = LoggerFactory
+            .getLogger(HashMapDataStore.class);
 
-    private String fileExtensionName;
+    private String option;
 
-    private Map<String, byte[]> values;
+    private DataEntryFactory deFactory;
 
-    public HashMapDataStore(String storagePathName, String fileExtensionName) {
-        this.storagePathName = storagePathName;
-        this.fileExtensionName = fileExtensionName;
+    private LogicalClockFactory lcFactory;
+
+    public HashMapDataStore(final String storagePathName,
+            final String fileExtensionName, final String options,
+            final DataEntryFactory deFactory,
+            final LogicalClockFactory lcFactory) {
+        this.option = option;
+        this.deFactory = deFactory;
+        this.lcFactory = lcFactory;
     }
 
-    public void open() {
-        values = new HashMap<String, byte[]>();
+    public String getStoragePathName() {
+        return "";
     }
 
-    public void close() {
+    public String getFileExtensionName() {
+        return "";
+    }
+
+    public String getOption() {
+        return option;
+    }
+
+    public void open() throws StorageException {
+    }
+
+    public void close() throws StorageException {
     }
 
     public boolean isFileBaseDataStore() {
         return false;
     }
 
-    public byte[] get(String key) {
-        return values.get(key);
+    @Override
+    public DataEntry get(Object key) {
+        return super.get(key);
     }
 
-    public Iterator<String> keyIterator() {
-        return new Iterator<String>() {
-            private Iterator<String> iter = values.keySet().iterator();
-
-            @Override
-            public boolean hasNext() {
-                return iter.hasNext();
-            }
-
-            @Override
-            public String next() {
-                return iter.next();
-            }
-
-            @Override
-            public void remove() {
-                iter.remove();
-            }
-        };
+    @Override
+    public DataEntry put(final String key, final DataEntry value) {
+        DataEntry ret = super.put(key, value);
+        if (ret == null) {
+            ret = value;
+        }
+        return ret;
     }
 
-    public boolean put(String key, byte[] value) {
-        values.put(key, value);
-        return true;
+    @Override
+    public DataEntry remove(Object key) {
+        return super.remove(key);
     }
 
-    public boolean remove(String key) throws StorageException {
-        return values.remove(key) != null;
+    @Override
+    public void clear() {
+        LOG.info("clear");
+        super.clear();
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        LOG.info("containsKey");
+        return super.containsKey(key);
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        LOG.info("containsValue");
+        return super.containsValue(value);
+    }
+
+    @Override
+    public Set<java.util.Map.Entry<String, DataEntry>> entrySet() {
+        LOG.info("entrySet");
+        return super.entrySet();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        LOG.info("isEmpty");
+        return super.isEmpty();
+    }
+
+    @Override
+    public Set<String> keySet() {
+        LOG.info("keySet");
+        return super.keySet();
+    }
+
+    @Override
+    public void putAll(Map<? extends String, ? extends DataEntry> m) {
+        LOG.info("putAll");
+        super.putAll(m);
+    }
+
+    @Override
+    public int size() {
+        LOG.info("size");
+        return super.size();
+    }
+
+    @Override
+    public Collection<DataEntry> values() {
+        LOG.info("values");
+        return super.values();
     }
 }

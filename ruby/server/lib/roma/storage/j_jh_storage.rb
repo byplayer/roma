@@ -9,44 +9,13 @@ module Roma
         super
       end
 
-      def initDataStore storage_path, ext_name
-        JavaHashMapDataStore.new storage_path, ext_name
+      def initDataStore storage_path, ext_name, options, de_fact, lc_fact
+        JavaHashMapDataStore.new storage_path, ext_name, options, de_fact, lc_fact
       end
-    end
-    
-    class JavaDataEntryFactory < Java::jp.co.rakuten.rit.roma.storage.DataEntryFactory
-      def initialize
-        super
-      end
-      
-      def initDataEntry key, vn, pc, lc, expt, v
-        JavaDataEntry.new key, vn, pc, lc, expt, v
-      end
-    end
-    
-    class JavaLClockFactory < Java::jp.co.rakuten.rit.roma.storage.LogicalClockFactory
-      def initialize
-        super
-      end
-    end
-    
-    class JavaDataEntry < Java::jp.co.rakuten.rit.roma.storage.DataEntry
-      def initialize key, vn, pc, lc, expt, v
-        super key, vn, pc, lc, expt, v
-      end
-      
-      def lclock
-        getLClock.getRaw
-      end
-      
-      def value
-        val = getValue
-        String.from_java_bytes val
-      end
-    end
-    
+    end # class JavaDataStoreFactory
+
     class JavaHashMapDataStore < Java::jp.co.rakuten.rit.roma.storage.HashMapDataStore
-    end
+    end # class JavaHashMapDataStore
 
     class JavaHashStorage < Roma::Storage::JavaBasicStorage
       def initialize

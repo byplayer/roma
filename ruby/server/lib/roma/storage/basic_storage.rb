@@ -423,7 +423,7 @@ module Roma
             return nil
           end
         end
-        
+
         ret = [vn, last, clk, expt, v]
         if expt == 0
           return ret if @hdb[@hdiv[vn]].put(k, pack_header(*ret[0..3]))

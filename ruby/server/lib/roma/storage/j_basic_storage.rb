@@ -4,6 +4,37 @@ require 'digest/sha1'
 
 module Roma
   module Storage
+    class JavaDataEntryFactory < Java::jp.co.rakuten.rit.roma.storage.DataEntryFactory
+      def initialize
+        super
+      end
+
+      def initDataEntry key, vn, pc, lc, expt, v
+        JavaDataEntry.new key, vn, pc, lc, expt, v
+      end
+    end
+
+    class JavaLClockFactory < Java::jp.co.rakuten.rit.roma.storage.LogicalClockFactory
+      def initialize
+        super
+      end
+    end
+
+    class JavaDataEntry < Java::jp.co.rakuten.rit.roma.storage.DataEntry
+      def initialize key, vn, pc, lc, expt, v
+        super key, vn, pc, lc, expt, v
+      end
+
+      def lclock
+        getLClock.getRaw
+      end
+
+      def value
+        val = getValue
+        String.from_java_bytes val
+      end
+    end
+
     class JavaBasicStorage < Java::jp.co.rakuten.rit.roma.storage.BasicStorage
       attr :hdb
       attr :hdiv
@@ -16,7 +47,6 @@ module Roma
 
       def initialize
         super
-
         @each_vn_dump_sleep = 0.001
         @each_vn_dump_sleep_count = 100
         @each_clean_up_sleep = 0.01
@@ -34,7 +64,7 @@ module Roma
       def storage_path= path
         setStoragePathName path
       end
-      
+
       def storage_path
         getStoragePathName
       end
@@ -58,7 +88,7 @@ module Roma
       def option= opt
         setOption opt
       end
-      
+
       def option
         getOption
       end
@@ -66,8 +96,8 @@ module Roma
       def get_stat
         ret = {}
         ret['storage.storage_path'] = File.expand_path(storage_path)
-        ret['storage.divnum'] = divnum
-        ret['storage.option'] = option
+        ret['storage.divnum'] = getDivisionNumber
+        ret['storage.option'] = getOption
         ret['storage.each_vn_dump_sleep'] = @each_vn_dump_sleep
         ret['storage.each_vn_dump_sleep_count'] = @each_vn_dump_sleep_count
         ret['storage.each_clean_up_sleep'] = @each_clean_up_sleep
@@ -116,17 +146,16 @@ module Roma
         [e2.getVNodeID, e2.getPClock, e2.lclock, e2.getExpire, e2.value]
       end
 
-      def clean_up(t,unit_test_flg=nil)
+      def clean_up(t, unit_test_flg = nil)
         n = 0
         nt = Time.now.to_i
-        @hdb.each_index{ |i|
+        getDataStores.each { |ds|
           delkey = []
-          @hdb[i].each{ |k, v|
-            vn, last, clk, expt = unpack_header(v)
-            if nt > expt && t > last
+          ds.each{ |k, e|
+            if nt > e.getExpire && t > e.getPClock
               n += 1
               #delkey << k
-              @hdb[i].out(k)
+              ds.remove e.getKey
             end
             if unit_test_flg
               closedb
@@ -143,17 +172,22 @@ module Roma
       def each_clean_up(t, vnhash)
         @do_clean_up = true
         nt = Time.now.to_i
-        @hdb.each{ |hdb|
-          hdb.each{ |k, v|
+        getDivisionNumber.times { |i|
+          ds = getDataStoreFromIndex i
+          ds.each{ |k, e|
             return unless @do_clean_up
-            vn, last, clk, expt = unpack_header(v)
-            vn_stat = vnhash[vn]
-            if vn_stat == :primary && ( (expt != 0 && nt > expt) || (expt == 0 && t > last) )
-              yield k, vn
-              hdb.out(k) if hdb.get(k) == v
-            elsif vn_stat == nil && t > last
-              yield k, vn
-              hdb.out(k) if hdb.get(k) == v
+            vn_stat = vnhash[e.getVNodeID]
+            if vn_stat == :primary &&
+              ((e.getExpire != 0 && nt > e.getExpire) || (e.getExpire == 0 && t > e.getPClock))
+              yield k, e.getVNodeID
+              if JavaDataEntry.toByteArray(ds.get(k)) == JavaDataEntry.toByteArray(e)
+                ds.remove(k)
+              end 
+            elsif vn_stat == nil && t > e.getPClock
+              yield k, e.getVNodeID
+              if JavaDataEntry.toByteArray(ds.get(k)) == JavaDataEntry.toByteArray(e)
+                ds.remove(k)
+              end
             end
             sleep @each_clean_up_sleep
           }
@@ -197,7 +231,7 @@ module Roma
             return nil
           end
         end
-        
+
         ret = [vn, last, clk, expt, v]
         if expt == 0
           return ret if @hdb[@hdiv[vn]].put(k, pack_header(*ret[0..3]))
@@ -208,15 +242,15 @@ module Roma
       end
 
       # Returns the vnode dump.
-      def dump(vn)
-        buf = get_vnode_hash(vn)
+      def dump vn
+        buf = get_vnode_hash vn
         return nil if buf.length == 0
-        Marshal.dump(buf)
+        Marshal.dump(buf) # TODO
       end
 
-      def dump_file(path,except_vnh = nil)
+      def dump_file(path, except_vnh = nil)
         pbuf = ''
-        path.split('/').each{|p|
+        path.split('/').each{ |p|
           pbuf << p
           begin
             Dir::mkdir(pbuf) unless File.exist?(pbuf)
@@ -224,45 +258,49 @@ module Roma
           end
           pbuf << '/'
         }
-        @divnum.times{|i|
+        getDivisionNumber.times { |i|
           f = open("#{path}/#{i}.dump","wb")
-          each_hdb_dump(i,except_vnh){|data| f.write(data) }
+          each_hdb_dump(i, except_vnh){ |data| f.write(data) }
           f.close
         }
-        open("#{path}/eod","w"){|f|
+        open("#{path}/eod","w"){ |f|
           f.puts Time.now
         }
       end
 
-      def each_vn_dump(target_vn)
+      def each_vn_dump target_vn
         count = 0
-        @divnum.times{|i|
+        getDivisionNumber.times{ |i|
           tn =  Time.now.to_i
-          @hdb[i].each{|k,v|
+          getDataStoreFromIndex(i).each{ |k, e|
             vn, last, clk, expt, val = unpack_data(v)
-            if vn != target_vn || (expt != 0 && tn > expt)
+            if e.getVNodeID != target_vn || (e.getExpire != 0 && tn > e.getExpire)
               count += 1              
               sleep @each_vn_dump_sleep if count % @each_vn_dump_sleep_count == 0
               next
             end
-            if val
-              yield [vn, last, clk, expt, k.length, k, val.length, val].pack("NNNNNa#{k.length}Na#{val.length}")
+            if e.value
+              yield [e.getVNodeID, e.getPClock, e.lclock, e.getExpire,
+               e.getKey.length, e.getKey, e.value.length, e.value].pack(
+                 "NNNNNa#{e.getKey.length}Na#{e.value.length}")
             else
-              yield [vn, last, clk, expt, k.length, k, 0].pack("NNNNNa#{k.length}N")
+              yield [e.getVNodeID, e.getPClock, e.lclock, e.getExpire,
+               e.getKey.length, e.getKey, 0].pack("NNNNNa#{e.getKey.length}N")
             end
           }
         }
       end
 
-      def each_hdb_dump(i,except_vnh = nil)
+      def each_hdb_dump(i, except_vnh = nil)
         count = 0
-        @hdb[i].each{|k,v|
-          vn, last, clk, expt, val = unpack_data(v)
-          if except_vnh && except_vnh.key?(vn) || Time.now.to_i > expt
+        getDataStoreFromIndex(i).each { |k, e|
+          if except_vnh && except_vnh.key?(e.getVNodeID) || Time.now.to_i > e.getExpire
             count += 1
             sleep @each_vn_dump_sleep if count % @each_vn_dump_sleep_count == 0
           else
-            yield [vn, last, clk, expt, k.length, k, val.length, val].pack("NNNNNa#{k.length}Na#{val.length}")
+            yield [e.getVNodeID, e.getPClock, e.lclock, e.getExpire,
+             e.getKey.length, e.getKey, e.value.length, e.value].pack(
+               "NNNNNa#{e.getKey.length}Na#{e.value.length}")
             sleep @each_vn_dump_sleep
           end
         }
@@ -270,14 +308,16 @@ module Roma
       private :each_hdb_dump
 
       # Create vnode dump.
-      def get_vnode_hash(vn)
+      def get_vnode_hash vn
         buf = {}
         count = 0
-        @hdb[@hdiv[vn]].each{ |k, v|
+        getDataStoreFromVNodeID(vn).each { |k, e|
           count += 1
           sleep @each_vn_dump_sleep if count % @each_vn_dump_sleep_count == 0
-          dat = unpack_data(v) #v.unpack('NNNN')
-          buf[k] = v if dat[0] == vn
+          if e.getVNodeID == vn
+            b = JavaDataEntry.toByteArray e
+            buf[k] = b
+          end
         }
         return buf
       end

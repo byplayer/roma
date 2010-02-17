@@ -1,20 +1,18 @@
 package jp.co.rakuten.rit.roma.storage;
 
-import java.util.Iterator;
+import java.util.Map;
 
-public interface DataStore {
+public interface DataStore extends Map<String, DataEntry> {
 
-    void open();
+    String getStoragePathName();
 
-    void close();
+    String getFileExtensionName();
+
+    String getOption();
+
+    void open() throws StorageException;
+
+    void close() throws StorageException;
 
     boolean isFileBaseDataStore();
-
-    boolean put(String key, byte[] value) throws StorageException;
-
-    byte[] get(String key) throws StorageException;
-
-    boolean remove(String key) throws StorageException;
-
-    Iterator<String> keyIterator() throws StorageException;
 }

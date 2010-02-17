@@ -9,7 +9,7 @@ public class DataEntry {
     private static final int METADATA_SIZE = 4 + 4 + 4 + 4;
 
     private String key;
-    
+
     private long hash; // long
 
     private long vnodeID; // long
@@ -39,11 +39,11 @@ public class DataEntry {
     public String getKey() {
         return key;
     }
-    
+
     public void setHash(long hash) {
         this.hash = hash;
     }
-    
+
     public long getHash() {
         return hash;
     }
@@ -111,26 +111,27 @@ public class DataEntry {
                         new String(getValue())).append("]");
         return sb.toString();
     }
-    
+
     public static byte[] toByteArray(DataEntry entry) {
         byte[] rawData = new byte[METADATA_SIZE + entry.getValue().length];
         write32bits(rawData, 0, entry.getVNodeID());
         write32bits(rawData, 4, entry.getPClock());
         write32bits(rawData, 8, entry.getLClock().getRaw());
         write32bits(rawData, 12, entry.getExpire());
-        System.arraycopy(entry.getValue(), 0, rawData, METADATA_SIZE, entry.getValue().length);
+        System.arraycopy(entry.getValue(), 0, rawData, METADATA_SIZE, entry
+                .getValue().length);
         return rawData;
     }
-    
-    public static DataEntry toDataEntry(DataEntryFactory deFactory, 
-            String key, byte[] rawData, LogicalClockFactory lcFactory) {
+
+    public static DataEntry toDataEntry(DataEntryFactory deFactory, String key,
+            byte[] rawData, LogicalClockFactory lcFactory) {
         long vnodeID = read32bits(rawData, 0);
         long pClock = read32bits(rawData, 4);
         long lClock = read32bits(rawData, 8);
         long expire = read32bits(rawData, 12);
         byte[] value = new byte[rawData.length - METADATA_SIZE];
         System.arraycopy(rawData, METADATA_SIZE, value, 0, value.length);
-        DataEntry entry = deFactory.newDataEntry(key, vnodeID, pClock, 
+        DataEntry entry = deFactory.newDataEntry(key, vnodeID, pClock,
                 lcFactory.newLogicalClock(lClock), expire, value);
         return entry;
     }

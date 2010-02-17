@@ -399,7 +399,7 @@ module Roma
           send_data("SERVER_ERROR #{hname} dose not exists.\r\n")
           return
         end
-        ret = @storages[hname].send(fnc, vn, k, d, expt ,v)
+        ret = @storages[hname].send(fnc, vn, k, d, expt, v)
         @stats.write_count += 1
         if ret
           redundant(nodes, hname, k, d, ret[2], expt, ret[4])
