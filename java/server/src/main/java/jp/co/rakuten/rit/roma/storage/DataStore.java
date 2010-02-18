@@ -4,9 +4,15 @@ import java.util.Map;
 
 public interface DataStore extends Map<String, DataEntry> {
 
+    void setStoragePathName(String name);
+
     String getStoragePathName();
 
+    void setFileExtensionName(String name);
+
     String getFileExtensionName();
+
+    void setOption(String name);
 
     String getOption();
 

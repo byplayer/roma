@@ -13,9 +13,9 @@ public class BasicStorage {
 
     private DataEntryFactory deFactory = new DataEntryFactory();
 
-    private String fileExtensionName;
+    private String rootStoragePathName;
 
-    private String storagePathName;
+    private String fileExtensionName;
 
     private int divisionNumber;
 
@@ -28,19 +28,29 @@ public class BasicStorage {
     private DataStore[] dataStores;
 
     public BasicStorage() {
-        setFileExtensionName("db");
-        setStoragePathName("./");
-        setVirtualNodeIDs(new long[0]);
-        setDivisionNumber(10);
-        setOption("");
+        setDataStoreFactory(new DataStoreFactory());
+        setLogicalClockFactory(new LogicalClockFactory());
+        setDataEntryFactory(new DataEntryFactory());
+    }
+
+    public DataStoreFactory getDataStoreFactory() {
+        return dsFactory;
     }
 
     public void setDataStoreFactory(DataStoreFactory factory) {
         dsFactory = factory;
     }
 
+    public LogicalClockFactory getLogicalClockFactory() {
+        return lcFactory;
+    }
+
     public void setLogicalClockFactory(LogicalClockFactory factory) {
         lcFactory = factory;
+    }
+
+    public DataEntryFactory getDataEntryFactory() {
+        return deFactory;
     }
 
     public void setDataEntryFactory(DataEntryFactory factory) {
@@ -49,18 +59,26 @@ public class BasicStorage {
 
     public void setFileExtensionName(String name) {
         fileExtensionName = name;
+        // for (int i = 0; i < dataStores.length; ++i) {
+        // dataStores[i].setFileExtensionName(name);
+        // }
     }
 
     public String getFileExtensionName() {
         return fileExtensionName;
+        // return dataStores[0].getFileExtensionName();
     }
 
-    public void setStoragePathName(String pathName) {
-        storagePathName = pathName;
+    public void setStoragePathName(String name) {
+        rootStoragePathName = name;
+        // for (int i = 0; i < dataStores.length; ++i) {
+        // dataStores[i].setStoragePathName(name);
+        // }
     }
 
     public String getStoragePathName() {
-        return storagePathName;
+        return rootStoragePathName;
+        // return dataStores[0].getStoragePathName();
     }
 
     public DataStore[] getDataStores() {
@@ -222,6 +240,16 @@ public class BasicStorage {
         } else {
             return null;
         }
+    }
+
+    public DataEntry execOutCommand(DataEntry entry) throws StorageException {
+        DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
+        if (ds == null) {
+            throw new StorageException(
+                    "Not found a data store specified by vnode: "
+                            + entry.getVNodeID());
+        }
+        return ds.remove(entry.getKey());
     }
 
     // public DataEntry add(DataEntry entry) throws StorageException {

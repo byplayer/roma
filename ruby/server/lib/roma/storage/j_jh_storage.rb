@@ -17,6 +17,10 @@ module Roma
     class JavaHashMapDataStore < Java::jp.co.rakuten.rit.roma.storage.HashMapDataStore
     end # class JavaHashMapDataStore
 
+    def opendb
+      super.opendb
+    end
+
     class JavaHashStorage < Roma::Storage::JavaBasicStorage
       def initialize
         super

@@ -146,6 +146,11 @@ module Roma
         [e2.getVNodeID, e2.getPClock, e2.lclock, e2.getExpire, e2.value]
       end
 
+      def out(vn, key, d)
+        e1 = createDataEntry key, vn, nil, nil, nil, nil
+        e2 = execOutCommand e1
+      end
+
       def clean_up(t, unit_test_flg = nil)
         n = 0
         nt = Time.now.to_i

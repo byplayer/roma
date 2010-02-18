@@ -36,6 +36,20 @@ module Roma
         }
         ret
       end
+
+      def opendb
+        path = ''
+        @storage_path.split('/').each{|p|
+          if p.length==0
+            path = '/'
+            next
+          end
+          path << p
+          Dir::mkdir(path) unless File.exist?(path)
+          path << '/'
+        }      
+        super.opendb
+      end
     end # class JavaTCHashStorage
   end # module Storage
 end # Roma

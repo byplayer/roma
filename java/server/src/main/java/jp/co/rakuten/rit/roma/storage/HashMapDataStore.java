@@ -13,6 +13,10 @@ public class HashMapDataStore extends HashMap<String, DataEntry> implements
     private static final Logger LOG = LoggerFactory
             .getLogger(HashMapDataStore.class);
 
+    private String storagePathName;
+    
+    private String fileExtensionName;
+    
     private String option;
 
     private DataEntryFactory deFactory;
@@ -23,17 +27,31 @@ public class HashMapDataStore extends HashMap<String, DataEntry> implements
             final String fileExtensionName, final String options,
             final DataEntryFactory deFactory,
             final LogicalClockFactory lcFactory) {
+        this.storagePathName = storagePathName;
+        this.fileExtensionName = fileExtensionName;
         this.option = option;
         this.deFactory = deFactory;
         this.lcFactory = lcFactory;
     }
+    
+    public void setStoragePathName(String name) {
+        storagePathName = name;
+    }
 
     public String getStoragePathName() {
-        return "";
+        return storagePathName;
+    }
+    
+    public void setFileExtensionName(String name) {
+        fileExtensionName = name;
     }
 
     public String getFileExtensionName() {
-        return "";
+        return fileExtensionName;
+    }
+    
+    public void setOption(String option) {
+        this.option = option;
     }
 
     public String getOption() {

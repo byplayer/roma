@@ -38,12 +38,24 @@ public class TCHashDataStore implements DataStore {
         this.lcFactory = lcFactory;
     }
 
+    public void setStoragePathName(String name) {
+        storagePathName = name;
+    }
+
     public String getStoragePathName() {
         return storagePathName;
     }
 
+    public void setFileExtensionName(String name) {
+        fileExtensionName = name;
+    }
+
     public String getFileExtensionName() {
         return fileExtensionName;
+    }
+
+    public void setOption(String option) {
+        this.option = option;
     }
 
     public String getOption() {
