@@ -14,9 +14,9 @@ public class HashMapDataStore extends HashMap<String, DataEntry> implements
             .getLogger(HashMapDataStore.class);
 
     private String storagePathName;
-    
+
     private String fileExtensionName;
-    
+
     private String option;
 
     private DataEntryFactory deFactory;
@@ -33,7 +33,7 @@ public class HashMapDataStore extends HashMap<String, DataEntry> implements
         this.deFactory = deFactory;
         this.lcFactory = lcFactory;
     }
-    
+
     public void setStoragePathName(String name) {
         storagePathName = name;
     }
@@ -41,7 +41,7 @@ public class HashMapDataStore extends HashMap<String, DataEntry> implements
     public String getStoragePathName() {
         return storagePathName;
     }
-    
+
     public void setFileExtensionName(String name) {
         fileExtensionName = name;
     }
@@ -49,7 +49,7 @@ public class HashMapDataStore extends HashMap<String, DataEntry> implements
     public String getFileExtensionName() {
         return fileExtensionName;
     }
-    
+
     public void setOption(String option) {
         this.option = option;
     }
@@ -84,6 +84,7 @@ public class HashMapDataStore extends HashMap<String, DataEntry> implements
 
     @Override
     public DataEntry remove(Object key) {
+        LOG.info("remove key: " + key);
         return super.remove(key);
     }
 

@@ -182,15 +182,18 @@ module Roma
           ds.each{ |k, e|
             return unless @do_clean_up
             vn_stat = vnhash[e.getVNodeID]
-            if vn_stat == :primary &&
-              ((e.getExpire != 0 && nt > e.getExpire) || (e.getExpire == 0 && t > e.getPClock))
+            if vn_stat == :primary && ((e.getExpire != 0 && nt > e.getExpire) || (e.getExpire == 0 && t > e.getPClock))
               yield k, e.getVNodeID
-              if JavaDataEntry.toByteArray(ds.get(k)) == JavaDataEntry.toByteArray(e)
+              r = String.from_java_bytes(JavaDataEntry.toByteArray(ds.get(k)))
+              l = String.from_java_bytes(JavaDataEntry.toByteArray(e))
+              if r == l
                 ds.remove(k)
               end 
             elsif vn_stat == nil && t > e.getPClock
               yield k, e.getVNodeID
-              if JavaDataEntry.toByteArray(ds.get(k)) == JavaDataEntry.toByteArray(e)
+              r = String.from_java_bytes(JavaDataEntry.toByteArray(ds.get(k)))
+              l = String.from_java_bytes(JavaDataEntry.toByteArray(e))
+              if r == l
                 ds.remove(k)
               end
             end
@@ -321,7 +324,7 @@ module Roma
           sleep @each_vn_dump_sleep if count % @each_vn_dump_sleep_count == 0
           if e.getVNodeID == vn
             b = JavaDataEntry.toByteArray e
-            buf[k] = b
+            buf[k] = String.from_java_bytes b
           end
         }
         return buf
