@@ -1,7 +1,5 @@
 package jp.co.rakuten.rit.roma.routing;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -15,8 +13,8 @@ public class RoutingTable {
 
     protected RoutingData routingData;
 
-    public RoutingTable(String data) {
-        routingData = RoutingData.create(data);
+    public RoutingTable(Object data) {
+        routingData = RoutingData.create((String) data);
     }
 
     public int getDgstBits() {
