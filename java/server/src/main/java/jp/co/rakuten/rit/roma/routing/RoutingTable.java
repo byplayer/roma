@@ -1,14 +1,9 @@
 package jp.co.rakuten.rit.roma.routing;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import net.arnx.jsonic.JSON;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,117 +13,57 @@ public class RoutingTable {
     private static final Logger LOG = LoggerFactory
             .getLogger(RoutingTable.class);
 
-    protected List<Object> routingData;
-
-    protected int dgstBits; // uint8
-
-    protected int divBits; // uint8
-
-    protected int redundantNum; // uint8
-
-    // the range of hash values is to 2**dgstBits from zero
-    // protected BigInteger hBits; // default 32
-
-    // search_mask = 2**(divBits - 1) << (dgstBits - divBits)
-    protected int maskBits; // uint8
-
-    protected List<String> nodeIDs;
-
-    protected Map<Long, List<String>> virtualNodeIndexes;
-
-    protected Map<String, Long> virtualNodeClocks;
+    protected RoutingData routingData;
 
     public RoutingTable(String data) {
-        initRoutingData(data);
-    }
-
-    protected void initRoutingData(String data) {
-        routingData = (List<Object>) JSON.decode(data);
-
-        Map<String, Object> map = (Map<String, Object>) routingData.get(0);
-        dgstBits = ((BigDecimal) map.get("dgst_bits")).intValue();
-        divBits = ((BigDecimal) map.get("div_bits")).intValue();
-        redundantNum = ((BigDecimal) map.get("rn")).intValue();
-        // this.hBits = new BigInteger("2").pow(dgstBits);
-        maskBits = dgstBits - divBits;
-        nodeIDs = toNodeIDs((List<String>) routingData.get(1));
-        virtualNodeIndexes = toVirtualNodeIndexes((Map<String, List<String>>) routingData
-                .get(2));
-        virtualNodeClocks = toVirtualNodeClocks((Map<String, BigDecimal>) routingData
-                .get(3));
-    }
-
-    private List<String> toNodeIDs(List<String> nodeIDs) {
-        Object[] o = (Object[]) nodeIDs.toArray();
-        nodeIDs.clear();
-        Arrays.sort(o);
-        for (int i = 0; i < o.length; ++i) {
-            nodeIDs.add((String) o[i]);
-        }
-        return nodeIDs;
-    }
-
-    private Map<Long, List<String>> toVirtualNodeIndexes(
-            Map<String, List<String>> rawData) {
-        Map<Long, List<String>> ret = new HashMap<Long, List<String>>();
-        Iterator<String> vns = rawData.keySet().iterator();
-        while (vns.hasNext()) {
-            String str = vns.next();
-            List<String> nodeIDs = rawData.get(str);
-            ret.put(Long.parseLong(str), nodeIDs);
-        }
-        return ret;
-    }
-
-    private Map<String, Long> toVirtualNodeClocks(
-            Map<String, BigDecimal> rawData) {
-        Map<String, Long> ret = new HashMap<String, Long>();
-        Iterator<String> vns = rawData.keySet().iterator();
-        while (vns.hasNext()) {
-            String vn = vns.next();
-            long i = ((BigDecimal) rawData.get(vn)).longValue();
-            ret.put(vn, i);
-        }
-        return ret;
+        routingData = RoutingData.create(data);
     }
 
     public int getDgstBits() {
-        return dgstBits;
+        return routingData.getDgstBits();
     }
 
     public int getDivBits() {
-        return divBits;
+        return routingData.getDivBits();
     }
 
     public int getRedundantNumber() {
-        return redundantNum;
+        return routingData.getRedundantNumber();
     }
 
     public List<String> getNodeIDs() {
-        return nodeIDs;
+        return routingData.getNodeIDs();
+//        List<String> ret = new ArrayList<String>();
+//        Iterator<String> nids = routingData.getNodeIDs().iterator();
+//        while (nids.hasNext()) {
+//            ret.add(nids.next());
+//        }
+//        return ret;
     }
 
     public void setNodeIDs(List<String> nodeIDs) {
-        this.nodeIDs = nodeIDs;
+        routingData.setNodeIDs(nodeIDs);
     }
 
     public Map<Long, List<String>> getVirtualNodeIndexes() {
-        return virtualNodeIndexes;
+        return routingData.getVirtualNodeIndexes();
     }
 
-    public Set<Long> getVirtualNodeIDs() {
-        return virtualNodeIndexes.keySet();
+    public List<Long> getVirtualNodeIDs() {
+        return routingData.getVirtuanlNodeIDs();
     }
 
     public long getVirtualNodeID(long hash) {
+        int dgstBits = routingData.getDgstBits();
+        int maskBits = routingData.getMaskBits();
         return ((hash << (64 - dgstBits)) >>> (maskBits + 64 - dgstBits));
     }
 
-    public Map<String, Long> getVirtualNodeClocks() {
-        return virtualNodeClocks;
+    public Map<Long, Long> getVirtualNodeClocks() {
+        return routingData.getVirtualNodeClocks();
     }
 
     public List<String> searchNodeIDs(long virtualNodeID) {
-        return virtualNodeIndexes.get(virtualNodeID);
+        return getVirtualNodeIndexes().get(virtualNodeID);
     }
 }

@@ -3,6 +3,7 @@ require 'json'
 
 module Roma
   module Routing
+
     class JavaRT < Java::jp.co.rakuten.rit.roma.routing.RoutingTable
       def self.to_json rd
         JSON.generate(
@@ -24,8 +25,8 @@ module Roma
 
       def initialize rd
         super rd
-        @hbits = 2**dgst_bits
         @log = Roma::Logging::RLogger.instance
+        @hbits = 2**dgst_bits
         @fail_cnt = Hash.new(0)
         @fail_cnt_threshold = 5
         @fail_cnt_gap = 0
@@ -95,20 +96,19 @@ module Roma
       end
 
       def nodes
-        ids = getNodeIDs
-        list = []
-        ids.each { |id|
-          list << id
-        }
-        list
+        getNodeIDs.clone
       end
 
-      def nodes=
-        setNodeIDs
+      def nodes= ns
+        setNodeIDs nds
       end
 
       def vnodes
         getVirtualNodeIDs
+      end
+
+      def vnodes= vns
+        setVirtualNodeIDs vns
       end
 
       def get_vnode_id d

@@ -3,8 +3,30 @@ require 'roma/routing/rttable'
 
 module Roma
   module Routing
+    class JavaRoutingTable
+      attr :row_rttable
 
-    class ChurnbasedRoutingTable < RoutingTable
+      def initialize rd, fname
+        json_rd = JavaRT.to_json rd
+        rt_fact = JavaRTFactory.new
+        @row_rttable = rt_fact.newRoutingTable json_rd, fname 
+      end
+
+      # declare several methods
+
+    end # class JavaRoutingTable
+
+    class JavaRTFactory < Java::jp.co.rakuten.rit.roma.routing.RoutingTableFactory
+      def initialize
+        super
+      end
+
+      def initRoutingTable data, fname
+        JavaCBRT.new data, fname 
+      end
+    end # JavaRTFactory
+
+    class JavaCBRT < JavaRT
       attr :fname
       attr :log_fd
       attr :log_name
@@ -17,7 +39,6 @@ module Roma
 
       def initialize(rd,fname)
         super(rd)
-        @rd.nodes.sort!
         @trans={}
         @fname=fname
         @leave_proc=nil

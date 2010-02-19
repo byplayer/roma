@@ -19,7 +19,7 @@ public class RoutingTableFactory {
     }
 
     public RoutingTable initRoutingTable(String data, String fileName) {
-        return new ChurnBasedRoutingTable(data, fileName);
+        return new RoutingTable(data);
     }
 
     public void postRoutingTableInit(RoutingTable routingTable) {
