@@ -1,6 +1,7 @@
 package jp.co.rakuten.rit.roma.storage;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -66,48 +67,78 @@ public class TCHashDataStore implements DataStore {
         tchdb = new HDB();
 
         // set options
-        String opt = getOption();
-        String[] opts = opt.split("#");
-        for (int i = 0; i < opts.length; ++i) {
-            parseAndSetOption(opts[i]);
-        }
-
-        //        
-        // /* create storage directory */
-        // if (storagePath != null && !storagePath.isDirectory()
-        // && !storagePath.mkdirs()) {
-        // throw new StorageException("Can not create storage directory: "
-        // + storagePath);
-        // }
-        //
-        // /* open real node (HashDB instance) */
-        // String dirName = storagePath != null ? storagePath.getAbsolutePath()
-        // + "/" : "";
-        // realNodes = new HashDB[divisionNumber];
-        // for (int i = 0; i < divisionNumber; i++) {
-        // realNodes[i] = openNode(dirName + i + "." + extensionName);
-        // }
+        parseAndSetOption();
 
         // open
         if (!tchdb.open(getStoragePathName(), HDB.OWRITER | HDB.OCREAT
                 | HDB.ONOLCK)) {
             int ecode = tchdb.ecode();
-            throw new StorageException("open error: " + tchdb.errmsg(ecode));
+            throw new StorageException("open error: " + HDB.errmsg(ecode));
         }
     }
 
-    private void parseAndSetOption(String opt) {
-        String[] keyAndValue = opt.split("=");
-        String key = keyAndValue[0];
-        String val = keyAndValue[1];
-        if (key.equals("xmsiz")) {
-            tchdb.setxmsiz(Long.parseLong(val));
-        } else if (key.equals("dfunit")) {
-            tchdb.setdfunit(Integer.parseInt(val));
-        } else if (key.equals("rcnum")) {
-            tchdb.setcache(Integer.parseInt(val));
-        } else if (key.equals("bnum")) {
-            tchdb.tune(Long.parseLong(val), 4, 10, HDB.TBZIP);
+    private void parseAndSetOption() {
+        // parse
+        String str = getOption();
+        String[] opts = str.split("#");
+        HashMap<String, String> props = new HashMap<String, String>();
+        for (int i = 0; i < opts.length; ++i) {
+            String[] kv = opts[i].split("=");
+            props.put(kv[0], kv[1]);
+        }
+
+        // validate
+        for (Iterator<String> keys = props.keySet().iterator(); keys.hasNext();) {
+            String key = keys.next();
+            if (!(key.equals("bnum") || key.equals("apow")
+                    || key.equals("fpow") || key.equals("opts")
+                    || key.equals("xmsiz") || key.equals("rcnum") || key
+                    .equals("dfunit"))) {
+                throw new RuntimeException("syntax error, unexpected option: "
+                        + key);
+            }
+        }
+
+        // set
+        int o = 0;
+        if (props.containsKey("opts")) {
+            String v = props.get("opts");
+            if (v.indexOf('l') != -1) {
+                o |= HDB.TLARGE;
+            }
+            if (v.indexOf('d') != -1) {
+                o |= HDB.TDEFLATE;
+            }
+            if (v.indexOf('b') != -1) {
+                o |= HDB.TBZIP;
+            }
+            if (v.indexOf('t') != -1) {
+                o |= HDB.TTCBS;
+            }
+        }
+
+        long bnum = 131071;
+        if (props.containsKey("bnum")) {
+            bnum = Long.parseLong(props.get("bnum"));
+        }
+        int apow = 4;
+        if (props.containsKey("anum")) {
+            apow = Integer.parseInt(props.get("apow"));
+        }
+        int fpow = 10;
+        if (props.containsKey("fnum")) {
+            fpow = Integer.parseInt(props.get("fpow"));
+        }
+        tchdb.tune(bnum, apow, fpow, o);
+
+        if (props.containsKey("xmsiz")) {
+            tchdb.setxmsiz(Long.parseLong(props.get("xmsiz")));
+        }
+        if (props.containsKey("dfunit")) {
+            tchdb.setdfunit(Integer.parseInt(props.get("dfunit")));
+        }
+        if (props.containsKey("rcnum")) {
+            tchdb.setcache(Integer.parseInt(props.get("rcnum")));
         }
     }
 
@@ -160,24 +191,45 @@ public class TCHashDataStore implements DataStore {
 
     @Override
     public void clear() {
-        LOG.info("clear");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean containsKey(Object key) {
-        LOG.info("containsKey");
-        return false;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean containsValue(Object value) {
-        LOG.info("containsValue");
-        return false;
+        throw new UnsupportedOperationException();
+    }
+    
+    public static class TCEntry implements java.util.Map.Entry<String, DataEntry> {
+        private DataEntry entry;
+        
+        public TCEntry(DataEntry entry) {
+            this.entry = entry;
+        }
+        
+        @Override
+        public String getKey() {
+            return entry.getKey();
+        }
+
+        @Override
+        public DataEntry getValue() {
+            return entry;
+        }
+
+        @Override
+        public DataEntry setValue(DataEntry value) {
+            throw new UnsupportedOperationException();
+        }
+        
     }
 
     @Override
     public Set<java.util.Map.Entry<String, DataEntry>> entrySet() {
-        LOG.info("entrySet");
         return new Set<java.util.Map.Entry<String, DataEntry>>() {
             @Override
             public boolean add(java.util.Map.Entry<String, DataEntry> e) {
@@ -213,21 +265,32 @@ public class TCHashDataStore implements DataStore {
             @Override
             public Iterator<java.util.Map.Entry<String, DataEntry>> iterator() {
                 return new Iterator<java.util.Map.Entry<String, DataEntry>>() {
+                    boolean iteratable = tchdb.iterinit();
+                    
+                    byte[] key;
+
                     @Override
                     public boolean hasNext() {
-                        // TODO Auto-generated method stub
-                        return false;
+                        if (!iteratable) {
+                            return false;
+                        }
+                        key = tchdb.iternext();
+                        return key != null;
                     }
 
                     @Override
                     public java.util.Map.Entry<String, DataEntry> next() {
-                        // TODO Auto-generated method stub
-                        return null;
+                        DataEntry entry = get(new String(key));
+                        if (entry != null) {
+                            return new TCEntry(entry);
+                        } else {
+                            return null;
+                        }
                     }
 
                     @Override
                     public void remove() {
-                        // TODO Auto-generated method stub
+                        throw new UnsupportedOperationException();
 
                     }
                 };
@@ -267,31 +330,26 @@ public class TCHashDataStore implements DataStore {
 
     @Override
     public boolean isEmpty() {
-        LOG.info("isEmpty");
-        return false;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Set<String> keySet() {
-        LOG.info("keySet");
-        // TODO
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void putAll(Map<? extends String, ? extends DataEntry> m) {
-        LOG.info("putAll");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int size() {
-        LOG.info("size");
-        return 0;
+        return (int) tchdb.rnum();
     }
 
     @Override
     public Collection<DataEntry> values() {
-        LOG.info("values");
-        return null;
+        throw new UnsupportedOperationException();
     }
 }

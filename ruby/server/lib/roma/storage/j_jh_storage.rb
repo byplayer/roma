@@ -40,6 +40,10 @@ module Roma
       def opendb
         super
       end
+
+      def closedb
+        super
+      end
     end # class JavaHashStorage
   end # module Storage
 end # module Roma

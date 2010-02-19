@@ -15,6 +15,21 @@ module Roma
     end # class JavaDataStoreFactory
 
     class JavaTCHDataStore < Java::jp.co.rakuten.rit.roma.storage.TCHashDataStore
+      def storage_path
+        getStoragePathName
+      end
+
+      def storage_path= path
+        setStoragePathName path
+      end
+
+      def out k
+        remove k
+      end
+
+      def rnum
+        size
+      end
     end
 
     class JavaTCHashStorage < Roma::Storage::JavaBasicStorage
@@ -30,25 +45,30 @@ module Roma
         ret = super
         getDivisionNumber.times { |i|
           ds = getDataStoreFromIndex i
-          ret["storage[#{idx}].path"] = ds.getStoragePathName
-          ret["storage[#{idx}].rnum"] = ds.getRNum
-          ret["storage[#{idx}].fsiz"] = ds.getFSize
+          ret["storage[#{i}].path"] = ds.storage_path
+          ret["storage[#{i}].rnum"] = ds.rnum
+          ret["storage[#{i}].fsiz"] = ds.getFSize
         }
         ret
       end
 
       def opendb
         path = ''
-        @storage_path.split('/').each{|p|
-          if p.length==0
+        storage_path.split('/').each{ |p|
+          if p.length == 0
             path = '/'
             next
           end
           path << p
           Dir::mkdir(path) unless File.exist?(path)
           path << '/'
-        }      
-        super.opendb
+        }
+        storage_path = "#{storage_path}/#{i}.#{ext_name}"
+        super
+      end
+
+      def closedb
+        super
       end
     end # class JavaTCHashStorage
   end # module Storage

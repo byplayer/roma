@@ -93,7 +93,6 @@ public abstract class AbstractStorage {
 
     public void setDivisionNumber(int divnum) {
         divisionNumber = divnum;
-
     }
 
     public int getDivisionNumber() {
