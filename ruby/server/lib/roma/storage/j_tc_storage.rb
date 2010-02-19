@@ -9,8 +9,8 @@ module Roma
         super
       end
 
-      def initDataStore storage_path, ext_name, de_fact
-        JavaTCHDataStore.new storage_path, ext_name, de_fact
+      def initDataStore storage_path, ext_name, options, de_fact, lc_fact
+        JavaTCHDataStore.new storage_path, ext_name, options, de_fact, lc_fact
       end
     end # class JavaDataStoreFactory
 
@@ -47,7 +47,7 @@ module Roma
           ds = getDataStoreFromIndex i
           ret["storage[#{i}].path"] = ds.storage_path
           ret["storage[#{i}].rnum"] = ds.rnum
-          ret["storage[#{i}].fsiz"] = ds.getFSize
+          # ret["storage[#{i}].fsiz"] = ds.getFSize
         }
         ret
       end
@@ -63,7 +63,6 @@ module Roma
           Dir::mkdir(path) unless File.exist?(path)
           path << '/'
         }
-        storage_path = "#{storage_path}/#{i}.#{ext_name}"
         super
       end
 

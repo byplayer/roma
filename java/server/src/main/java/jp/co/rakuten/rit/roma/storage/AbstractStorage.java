@@ -133,9 +133,10 @@ public abstract class AbstractStorage {
     }
 
     public void createDataStores() throws StorageException {
-        dataStores = new DataStore[divisionNumber];
+        dataStores = new DataStore[getDivisionNumber()];
         for (int i = 0; i < dataStores.length; ++i) {
-            dataStores[i] = dsFactory.newDataStore(getStoragePathName(),
+            String fileName = getStoragePathName() + "/" + i + "." + getFileExtensionName();
+            dataStores[i] = dsFactory.newDataStore(fileName,
                     getFileExtensionName(), getOption(), deFactory, lcFactory);
             dataStores[i].open();
         }

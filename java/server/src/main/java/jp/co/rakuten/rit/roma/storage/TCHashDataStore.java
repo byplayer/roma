@@ -80,7 +80,15 @@ public class TCHashDataStore implements DataStore {
     private void parseAndSetOption() {
         // parse
         String str = getOption();
+        if (str == null || str.equals("")) {
+            return;
+        }
+
         String[] opts = str.split("#");
+        if (opts.length == 0) {
+            return;
+        }
+
         HashMap<String, String> props = new HashMap<String, String>();
         for (int i = 0; i < opts.length; ++i) {
             String[] kv = opts[i].split("=");
