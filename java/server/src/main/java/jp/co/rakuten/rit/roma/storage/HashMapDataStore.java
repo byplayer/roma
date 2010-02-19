@@ -84,61 +84,51 @@ public class HashMapDataStore extends HashMap<String, DataEntry> implements
 
     @Override
     public DataEntry remove(Object key) {
-        LOG.info("remove key: " + key);
         return super.remove(key);
     }
 
     @Override
     public void clear() {
-        LOG.info("clear");
         super.clear();
     }
 
     @Override
     public boolean containsKey(Object key) {
-        LOG.info("containsKey");
         return super.containsKey(key);
     }
 
     @Override
     public boolean containsValue(Object value) {
-        LOG.info("containsValue");
         return super.containsValue(value);
     }
 
     @Override
     public Set<java.util.Map.Entry<String, DataEntry>> entrySet() {
-        LOG.info("entrySet");
         return super.entrySet();
     }
 
     @Override
     public boolean isEmpty() {
-        LOG.info("isEmpty");
         return super.isEmpty();
     }
 
     @Override
     public Set<String> keySet() {
-        LOG.info("keySet");
         return super.keySet();
     }
 
     @Override
     public void putAll(Map<? extends String, ? extends DataEntry> m) {
-        LOG.info("putAll");
         super.putAll(m);
     }
 
     @Override
     public int size() {
-        LOG.info("size");
         return super.size();
     }
 
     @Override
     public Collection<DataEntry> values() {
-        LOG.info("values");
         return super.values();
     }
 }

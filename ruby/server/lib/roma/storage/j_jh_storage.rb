@@ -15,11 +15,14 @@ module Roma
     end # class JavaDataStoreFactory
 
     class JavaHashMapDataStore < Java::jp.co.rakuten.rit.roma.storage.HashMapDataStore
-    end # class JavaHashMapDataStore
+      def out k
+        remove k
+      end
 
-    def opendb
-      super.opendb
-    end
+      def rnum
+        size
+      end
+    end # class JavaHashMapDataStore
 
     class JavaHashStorage < Roma::Storage::JavaBasicStorage
       def initialize
@@ -27,6 +30,15 @@ module Roma
         setDataStoreFactory JavaDataStoreFactory.new
         setDataEntryFactory JavaDataEntryFactory.new
         setLogicalClockFactory JavaLClockFactory.new
+      end
+
+      def get_stat
+        ret = super
+        ret
+      end
+
+      def opendb
+        super
       end
     end # class JavaHashStorage
   end # module Storage

@@ -1,31 +1,6 @@
 package jp.co.rakuten.rit.roma.storage;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-
-public class BasicStorage {
-    private DataStoreFactory dsFactory = new DataStoreFactory();
-
-    private LogicalClockFactory lcFactory = new LogicalClockFactory();
-
-    private DataEntryFactory deFactory = new DataEntryFactory();
-
-    private String rootStoragePathName;
-
-    private String fileExtensionName;
-
-    private int divisionNumber;
-
-    private long[] virtualNodeIDs;
-
-    private String option;
-
-    private Map<Long, Integer> virtualNodeIDMap;
-
-    private DataStore[] dataStores;
+public class BasicStorage extends AbstractStorage {
 
     public BasicStorage() {
         setDataStoreFactory(new DataStoreFactory());
@@ -33,168 +8,16 @@ public class BasicStorage {
         setDataEntryFactory(new DataEntryFactory());
     }
 
-    public DataStoreFactory getDataStoreFactory() {
-        return dsFactory;
-    }
-
-    public void setDataStoreFactory(DataStoreFactory factory) {
-        dsFactory = factory;
-    }
-
-    public LogicalClockFactory getLogicalClockFactory() {
-        return lcFactory;
-    }
-
-    public void setLogicalClockFactory(LogicalClockFactory factory) {
-        lcFactory = factory;
-    }
-
-    public DataEntryFactory getDataEntryFactory() {
-        return deFactory;
-    }
-
-    public void setDataEntryFactory(DataEntryFactory factory) {
-        deFactory = factory;
-    }
-
-    public void setFileExtensionName(String name) {
-        fileExtensionName = name;
-        // for (int i = 0; i < dataStores.length; ++i) {
-        // dataStores[i].setFileExtensionName(name);
-        // }
-    }
-
-    public String getFileExtensionName() {
-        return fileExtensionName;
-        // return dataStores[0].getFileExtensionName();
-    }
-
-    public void setStoragePathName(String name) {
-        rootStoragePathName = name;
-        // for (int i = 0; i < dataStores.length; ++i) {
-        // dataStores[i].setStoragePathName(name);
-        // }
-    }
-
-    public String getStoragePathName() {
-        return rootStoragePathName;
-        // return dataStores[0].getStoragePathName();
-    }
-
-    public DataStore[] getDataStores() {
-        return dataStores;
-    }
-
-    public void setDataStores(DataStore[] dataStores) {
-        this.dataStores = dataStores;
-    }
-
-    public void setVirtualNodeIDs(long[] virtualNodeIDs) {
-        this.virtualNodeIDs = virtualNodeIDs;
-    }
-
-    public long[] getVirtualNodeIDs() {
-        return virtualNodeIDs;
-    }
-
-    public void setDivisionNumber(int divnum) {
-        divisionNumber = divnum;
-
-    }
-
-    public int getDivisionNumber() {
-        return divisionNumber;
-    }
-
-    public void setOption(String option) {
-        this.option = option;
-    }
-
-    public String getOption() {
-        return option;
-    }
-
-    public boolean isFileBaseStorage() {
-        if (dataStores != null) {
-            return dataStores[0].isFileBaseDataStore();
-        } else {
-            return false;
-        }
-    }
-
     public void open() throws StorageException {
         createVirtualNodeIDMap();
         createDataStores();
     }
 
-    protected void createVirtualNodeIDMap() {
-        virtualNodeIDMap = new HashMap<Long, Integer>();
-        Random random;
-        try {
-            random = SecureRandom.getInstance("SHA1");
-        } catch (NoSuchAlgorithmException e) {
-            random = new Random();
-        }
-        for (long vnID : virtualNodeIDs) {
-            random.setSeed(vnID);
-            int index = random.nextInt(divisionNumber);
-            virtualNodeIDMap.put(vnID, index);
-        }
-    }
-
-    protected void createDataStores() throws StorageException {
-        dataStores = new DataStore[divisionNumber];
-        for (int i = 0; i < dataStores.length; ++i) {
-            dataStores[i] = dsFactory.newDataStore(getStoragePathName(),
-                    getFileExtensionName(), getOption(), deFactory, lcFactory);
-            dataStores[i].open();
-        }
-    }
-
-    protected DataStore getDataStoreFromVNodeID(long virtualNodeID) {
-        Integer i = virtualNodeIDMap.get(virtualNodeID);
-        if (i == null) {
-            return null;
-        } else {
-            return getDataStoreFromIndex(i);
-        }
-    }
-
-    protected DataStore getDataStoreFromIndex(int index) {
-        if (0 <= index && index < dataStores.length) {
-            return dataStores[index];
-        } else {
-            return null;
-        }
-    }
-
     public void close() throws StorageException {
-        for (int i = 0; i < divisionNumber; ++i) {
-            DataStore ds = dataStores[i];
+        for (int i = 0; i < getDivisionNumber(); ++i) {
+            DataStore ds = getDataStoreFromIndex(i);
             ds.close();
         }
-    }
-
-    public DataEntry createDataEntry(String key, long vnodeID, long pClock,
-            long lClock, long expire, byte[] value) {
-        return deFactory.newDataEntry(key, vnodeID, pClock, lcFactory
-                .newLogicalClock(lClock), expire, value);
-    }
-
-    public int compareLogicalClock(long lc1, long lc2) {
-        LogicalClock lc1obj = lcFactory.newLogicalClock(lc1);
-        LogicalClock lc2obj = lcFactory.newLogicalClock(lc2);
-        return lc1obj.compareTo(lc2obj);
-    }
-
-    public DataEntry getDataEntry(DataEntry entry) throws StorageException {
-        DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
-        if (ds == null) {
-            throw new StorageException(
-                    "Not found a data store specified by vnode: "
-                            + entry.getVNodeID());
-        }
-        return ds.get(entry.getKey());
     }
 
     public DataEntry execSetCommand(DataEntry entry) throws StorageException {
@@ -210,7 +33,7 @@ public class BasicStorage {
             lclock = prev.getLClock();
             lclock.incr();
         } else {
-            lclock = lcFactory.newLogicalClock(0L);
+            lclock = getLogicalClockFactory().newLogicalClock(0L);
         }
 
         entry.setCurrentPClock();
@@ -221,6 +44,33 @@ public class BasicStorage {
         } else {
             return null;
         }
+    }
+
+    public DataEntry execRSetCommand(DataEntry entry) throws StorageException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public DataEntry execAddCommand(DataEntry entry) throws StorageException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public DataEntry execReplaceCommand(DataEntry entry)
+            throws StorageException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public DataEntry execAppendCommand(DataEntry entry) throws StorageException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public DataEntry execPrependCommand(DataEntry entry)
+            throws StorageException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public DataEntry execGetCommand(DataEntry entry) throws StorageException {
@@ -242,6 +92,17 @@ public class BasicStorage {
         }
     }
 
+    public DataEntry execDeleteCommand(DataEntry entry) throws StorageException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public DataEntry execRDeleteCommand(DataEntry entry)
+            throws StorageException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
     public DataEntry execOutCommand(DataEntry entry) throws StorageException {
         DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
         if (ds == null) {
@@ -250,6 +111,16 @@ public class BasicStorage {
                             + entry.getVNodeID());
         }
         return ds.remove(entry.getKey());
+    }
+
+    public DataEntry execIncrCommand(DataEntry entry) throws StorageException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public DataEntry execDecrCommand(DataEntry entry) throws StorageException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     // public DataEntry add(DataEntry entry) throws StorageException {
@@ -406,17 +277,12 @@ public class BasicStorage {
     // return barray.toByteArray();
     // }
 
-    private static void sleepSilently(long t) {
+    public static void sleepSilently(long t) {
         if (t > 0) {
             try {
                 Thread.sleep(t);
             } catch (InterruptedException e) {
             }
         }
-    }
-
-    public static void main(String[] args) {
-        System.out.println(Long.MAX_VALUE);
-        System.out.println(Integer.MAX_VALUE);
     }
 }

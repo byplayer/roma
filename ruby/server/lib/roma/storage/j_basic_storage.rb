@@ -24,6 +24,22 @@ module Roma
       def initialize key, vn, pc, lc, expt, v
         super key, vn, pc, lc, expt, v
       end
+      
+      def key
+        getKey
+      end
+      
+      def vn
+        getVNodeID
+      end
+      
+      def pclock
+        getPClock
+      end
+
+      def expire
+        getExpire
+      end
 
       def lclock
         getLClock.getRaw
@@ -92,7 +108,7 @@ module Roma
       def option
         getOption
       end
-
+      
       def get_stat
         ret = {}
         ret['storage.storage_path'] = File.expand_path(storage_path)
@@ -120,16 +136,51 @@ module Roma
 
       def get_context vn, key, d
         e1 = createDataEntry key, vn, nil, nil, nil, nil
-        e2 = super.getDataEntry e1
+        e2 = getDataEntry e1
         return nil unless e2
-        [e2.getVNodeID, e2.getPClock, e2.lclock, e2.getExpire]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire]
       end
 
-      def set(vn, key, d, expt, v)
-        e1 = createDataEntry key, vn, nil, nil, expt, v.to_java_bytes
+      def set(vn, key, d, exp, v)
+        e1 = createDataEntry key, vn, nil, nil, exp, v.to_java_bytes
         e2 = execSetCommand e1
         return nil unless e2
-        [e2.getVNodeID, e2.getPClock, e2.lclock, e2.getExpire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+      end
+
+      def rset(vn, key, d, lc, exp, v)
+        e1 = createDataEntry key, vn, nil, lc, exp, v.to_java_bytes
+        e2 = execRSetCommand e1
+        return nil unless e2
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+      end
+
+      def add(vn, key, d, exp, v)
+        e1 = createDataEntry key, vn, nil, nil, exp, v.to_java_bytes
+        e2 = execAddCommand e1
+        return nil unless e2
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+      end
+
+      def replace(vn, key, d, exp, v)
+        e1 = createDataEntry key, vn, nil, nil, exp, v.to_java_bytes
+        e2 = execReplaceCommand e1
+        return nil unless e2
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+      end
+
+      def append(vn, key, d, exp, v)
+        e1 = createDataEntry key, vn, nil, nil, exp, v.to_java_bytes
+        e2 = execAppendCommand e1
+        return nil unless e2
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+      end
+
+      def prepend(vn, key, d, exp, v)
+        e1 = createDataEntry key, vn, nil, nil, exp, v.to_java_bytes
+        e2 = execPrependCommand e1
+        return nil unless e2
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
       end
 
       def get(vn, key, d)
@@ -141,14 +192,42 @@ module Roma
 
       def get_raw(vn, key, d)
         e1 = createDataEntry key, vn, nil, nil, nil, nil
-        e2 = super.getDataEntry e1
+        e2 = getDataEntry e1
         return nil unless e2
-        [e2.getVNodeID, e2.getPClock, e2.lclock, e2.getExpire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+      end
+
+      def delete(vn, key, d)
+        e1 = createDataEntry key, vn, nil, nil, nil, nil
+        e2 = execDeleteCommand e1
+        return nil unless e2
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+      end
+
+      def rdelete(vn, key, d, lclock)
+        e1 = createDataEntry key, vn, nil, lclock, nil, nil
+        e2 = execRDeleteCommand e1
+        return nil unless e2
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
       end
 
       def out(vn, key, d)
         e1 = createDataEntry key, vn, nil, nil, nil, nil
         e2 = execOutCommand e1
+      end
+
+      def incr(vn, key, d, v)
+        e1 = createDataEntry key, vn, nil, nil, nil, v.to_java_bytes
+        e2 = execIncrCommand e1
+        return nil unless e2
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+      end
+
+      def decr(vn, key, d, v)
+        e1 = createDataEntry key, vn, nil, nil, nil, v.to_java_bytes
+        e2 = execDecrCommand e1
+        return nil unless e2
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
       end
 
       def clean_up(t, unit_test_flg = nil)
@@ -157,10 +236,10 @@ module Roma
         getDataStores.each { |ds|
           delkey = []
           ds.each{ |k, e|
-            if nt > e.getExpire && t > e.getPClock
+            if nt > e.expire && t > e.pclock
               n += 1
               #delkey << k
-              ds.remove e.getKey
+              ds.out e.getKey
             end
             if unit_test_flg
               closedb
@@ -177,24 +256,23 @@ module Roma
       def each_clean_up(t, vnhash)
         @do_clean_up = true
         nt = Time.now.to_i
-        getDivisionNumber.times { |i|
-          ds = getDataStoreFromIndex i
+        getDataStores.each { |ds|
           ds.each{ |k, e|
             return unless @do_clean_up
-            vn_stat = vnhash[e.getVNodeID]
-            if vn_stat == :primary && ((e.getExpire != 0 && nt > e.getExpire) || (e.getExpire == 0 && t > e.getPClock))
-              yield k, e.getVNodeID
+            vn_stat = vnhash[e.vn]
+            if vn_stat == :primary && ((e.expire != 0 && nt > e.expire) || (e.expire == 0 && t > e.getpclock))
+              yield k, e.vn
               r = String.from_java_bytes(JavaDataEntry.toByteArray(ds.get(k)))
               l = String.from_java_bytes(JavaDataEntry.toByteArray(e))
               if r == l
-                ds.remove(k)
+                ds.out(k)
               end 
-            elsif vn_stat == nil && t > e.getPClock
-              yield k, e.getVNodeID
+            elsif vn_stat == nil && t > e.pclock
+              yield k, e.vn
               r = String.from_java_bytes(JavaDataEntry.toByteArray(ds.get(k)))
               l = String.from_java_bytes(JavaDataEntry.toByteArray(e))
               if r == l
-                ds.remove(k)
+                ds.out(k)
               end
             end
             sleep @each_clean_up_sleep
@@ -322,9 +400,8 @@ module Roma
         getDataStoreFromVNodeID(vn).each { |k, e|
           count += 1
           sleep @each_vn_dump_sleep if count % @each_vn_dump_sleep_count == 0
-          if e.getVNodeID == vn
-            b = JavaDataEntry.toByteArray e
-            buf[k] = String.from_java_bytes b
+          if e.vn == vn
+            buf[k] = String.from_java_bytes(JavaDataEntry.toByteArray(e))
           end
         }
         return buf

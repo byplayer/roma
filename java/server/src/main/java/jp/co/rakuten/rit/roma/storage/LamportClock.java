@@ -13,16 +13,21 @@ public class LamportClock implements LogicalClock {
     }
 
     public void incr() {
-        raw++;
-        // TODO Auto-generated method stub
+        raw = (raw + 1) & 0xffffffff;
     }
 
-    public int compareTo(LogicalClock o) {
-        if (!(o instanceof LamportClock)) {
+    public int compareTo(LogicalClock c) {
+        if (!(c instanceof LamportClock)) {
             throw new IllegalArgumentException();
         }
-        // TODO
-        return 0;
+        LamportClock lc = (LamportClock) c;
+        long sub = raw - lc.raw;
+        long abs = (sub < 0) ? -sub : sub;
+        if (abs < 0x80000000) {
+            return (int) (raw - lc.raw);
+        } else {
+            return (int) (lc.raw - raw);
+        }
     }
 
     @Override
