@@ -17,7 +17,7 @@ module Roma
       end
 
       def set(vn,nodes)
-        id = '0' + (vn >> (@dgst_bits-@div_bits)).to_s(2).rjust(@div_bits,'0')
+        id = '0' + (vn >> (@dgst_bits - @div_bits)).to_s(2).rjust(@div_bits,'0')
         @tree[id] = Digest::SHA1.hexdigest(nodes.to_s)
         update(parent(id))
       end

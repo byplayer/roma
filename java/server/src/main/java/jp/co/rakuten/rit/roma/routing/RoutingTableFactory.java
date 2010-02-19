@@ -19,7 +19,6 @@ public class RoutingTableFactory {
     }
 
     public RoutingTable initRoutingTable(String data, String fileName) {
-        System.out.println("routing data: " + data);
         return new ChurnBasedRoutingTable(data, fileName);
     }
 

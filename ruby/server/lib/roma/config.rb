@@ -1,9 +1,10 @@
 require 'roma/storage/rh_storage'
-require 'roma/storage/j_tc_storage' if defined? JRUBY_VERSION
+require 'roma/storage/j_jh_storage' if defined? JRUBY_VERSION
 require 'roma/event/handler'
 require 'roma/event/rsok_handler'
 require 'roma/event/j_handler' if defined? JRUBY_VERSION
 require 'roma/routing/cb_rttable'
+require 'roma/routing/j_cb_rttable' if defined? JRUBY_VERSION
 
 module Roma
 
@@ -27,11 +28,11 @@ module Roma
     HANDLER_CLASS = Roma::Event::JavaHandler
 
     # routing setting
-    RTTABLE_CLASS = Roma::Routing::ChurnbasedRoutingTable
+    RTTABLE_CLASS = Roma::Routing::JavaChurnBasedRoutingTable
     RTTABLE_PATH = '.'
 
     # storage setting
-    STORAGE_CLASS = Roma::Storage::JavaTCHashStorage
+    STORAGE_CLASS = Roma::Storage::JavaHashStorage
     STORAGE_DIVNUM = 10
     STORAGE_PATH = '.'
     STORAGE_DUMP_PATH = '/tmp'

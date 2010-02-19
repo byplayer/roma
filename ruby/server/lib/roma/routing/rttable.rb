@@ -35,7 +35,6 @@ module Roma
       end
 
       def get_stat(ap)
-
         pn = sn = short = lost = 0
         @rd.v_idx.each_pair{|vn, nids|
           if nids == nil || nids.length == 0

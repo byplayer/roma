@@ -86,7 +86,11 @@ module Roma
       end
 
       def vn_list= vn_list
-        setVirtualNodeIDs vn_list.to_java(:long)
+        list = []
+        vn_list.each { |vn|
+          list << vn
+        }
+        setVirtualNodeIDs list.to_java(:long)
       end
 
       def vn_list
