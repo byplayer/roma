@@ -2,6 +2,7 @@ package jp.co.rakuten.rit.roma.command.java;
 
 import jp.co.rakuten.rit.roma.command.Command;
 import jp.co.rakuten.rit.roma.command.Receiver;
+import jp.co.rakuten.rit.roma.storage.BasicStorage;
 
 public class SystemCommands {
     public static class QuitCommand extends Command {

@@ -28,7 +28,9 @@ module Roma
 
       def postReceiverInit recv
         recv.storages = @storages
+        recv.setStorages @storages
         recv.rttable = @rttable
+        recv.setRoutingTable @rttable
         recv.stats = @stats
         recv.nid = @stats.ap_str
         recv.defhash = 'roma'

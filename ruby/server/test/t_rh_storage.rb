@@ -10,7 +10,13 @@ rescue => e
   $LOAD_PATH.unshift("#{base_path}/server/lib")
 end
 
-require 'roma/storage/rh_storage'
+if defined? JRUBY_VERSION
+  require 'roma/storage/j_jh_storage'
+  $st_class = Roma::Storage::JavaHashStorage
+else
+  require 'roma/storage/rh_storage'
+  $st_class = Roma::Storage::RubyHashStorage
+end
 require 'test/roma-test-storage-utils'
 
 class RubyHashStorageTest < Test::Unit::TestCase
@@ -18,11 +24,11 @@ class RubyHashStorageTest < Test::Unit::TestCase
 
   def initialize(arg)
     super(arg)
-    @ndat=1000
+    @ndat = 1000
   end
 
   def setup
-    @st=Roma::Storage::RubyHashStorage.new
+    @st = $st_class.new
     @st.vn_list = [0]
     @st.opendb
   end

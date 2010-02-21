@@ -28,8 +28,8 @@ module Roma
     HANDLER_CLASS = Roma::Event::JavaHandler
 
     # routing setting
-#    RTTABLE_CLASS = Roma::Routing::JavaCBRoutingTable
-    RTTABLE_CLASS = Roma::Routing::ChurnbasedRoutingTable
+    RTTABLE_CLASS = Roma::Routing::JavaCBRoutingTable
+#    RTTABLE_CLASS = Roma::Routing::ChurnbasedRoutingTable
     RTTABLE_PATH = '.'
 
     # storage setting
