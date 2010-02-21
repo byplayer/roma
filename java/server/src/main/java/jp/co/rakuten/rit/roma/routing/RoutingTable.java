@@ -11,10 +11,20 @@ public class RoutingTable {
     private static final Logger LOG = LoggerFactory
             .getLogger(RoutingTable.class);
 
+    protected Object rawData;
+
     protected RoutingData routingData;
 
+    private long searchMask;
+
     public RoutingTable(Object data) {
-        routingData = RoutingData.create((String) data);
+        rawData = data;
+    }
+
+    public void initRoutingData(String data) {
+        routingData = RoutingData.create(data);
+        setSearchMask();
+        rawData = null;
     }
 
     public int getDgstBits() {
@@ -25,18 +35,28 @@ public class RoutingTable {
         return routingData.getDivBits();
     }
 
+    private void setSearchMask() {
+        // TODO
+        int maskBits = routingData.getMaskBits();
+        searchMask = (0xFFFFFFFF >>> maskBits) << maskBits;
+    }
+
+    private long getSearchMask() {
+        return searchMask;
+    }
+
     public int getRedundantNumber() {
         return routingData.getRedundantNumber();
     }
 
     public List<String> getNodeIDs() {
         return routingData.getNodeIDs();
-//        List<String> ret = new ArrayList<String>();
-//        Iterator<String> nids = routingData.getNodeIDs().iterator();
-//        while (nids.hasNext()) {
-//            ret.add(nids.next());
-//        }
-//        return ret;
+        // List<String> ret = new ArrayList<String>();
+        // Iterator<String> nids = routingData.getNodeIDs().iterator();
+        // while (nids.hasNext()) {
+        // ret.add(nids.next());
+        // }
+        // return ret;
     }
 
     public void setNodeIDs(List<String> nodeIDs) {
@@ -52,9 +72,7 @@ public class RoutingTable {
     }
 
     public long getVirtualNodeID(long hash) {
-        int dgstBits = routingData.getDgstBits();
-        int maskBits = routingData.getMaskBits();
-        return ((hash << (64 - dgstBits)) >>> (maskBits + 64 - dgstBits));
+        return hash & getSearchMask();
     }
 
     public Map<Long, Long> getVirtualNodeClocks() {

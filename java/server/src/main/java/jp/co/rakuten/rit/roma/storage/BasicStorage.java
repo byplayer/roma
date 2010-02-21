@@ -47,8 +47,27 @@ public class BasicStorage extends AbstractStorage {
     }
 
     public DataEntry execRSetCommand(DataEntry entry) throws StorageException {
-        // TODO
-        throw new UnsupportedOperationException();
+        DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
+        if (ds == null) {
+            throw new StorageException(
+                    "Not found a data store specified by vnode: "
+                            + entry.getVNodeID());
+        }
+        DataEntry prev = ds.get(entry.getKey());
+        long t = DataEntry.getNow();
+        if (prev != null) {
+            if ((t - prev.getPClock() < getLogicalClockExpireTime()) &&
+                    (compare(entry.getLClock(), prev.getLClock()) <= 0)) {
+                return null;
+            }
+        }
+
+        DataEntry ret = ds.put(entry.getKey(), entry);
+        if (ret != null) {
+            return entry;
+        } else {
+            return null;
+        }
     }
 
     public DataEntry execAddCommand(DataEntry entry) throws StorageException {

@@ -1,4 +1,4 @@
-package jp.co.rakuten.rit.roma.event;
+package jp.co.rakuten.rit.roma;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -75,37 +75,37 @@ public class NetSpyMemcachedTest {
                 System.out.println("reason: " + e.getMessage());
                 throw e;
             }
-            System.out.println("set: k: " + k + ", v: " + v);
-            Thread.sleep(100);
+//            System.out.println("set: k: " + k + ", v: " + v);
+            Thread.sleep(1);
         }
         time1 = System.currentTimeMillis() - time1;
         double t1 = ((double) (count / (double) time1)) * 1000;
         System.out.println("put qps: " + t1);
 
-//        long time = System.currentTimeMillis();
-//        for (int i = 0; i < count; ++i) {
-//            if (i % 1000 == 0) {
-//                System.out.println("get count: " + i);
-//            }
-//            String k = s + "-k-" + i;
-//            String v = s + "-v-" + dummy + i;
-//            String v2 = null;
-//            try {
-//                v2 = (String) c.get(k);
-//            } catch (Exception e) {
-//                System.out.println("get error key: " + k + ", "
-//                        + e.getMessage());
-//                throw e;
-//            }
-//
-//            if (!v.equals(v2)) {
-//                System.out.println("key: " + k + ", v1: " + v + ", v2: " + v2);
-//            }
-//            Thread.sleep(100);
-//        }
-//        time = System.currentTimeMillis() - time;
-//        double t = ((double) (count / (double) time)) * 1000;
-//        System.out.println("get qps: " + t);
+        long time = System.currentTimeMillis();
+        for (int i = 0; i < count; ++i) {
+            if (i % 1000 == 0) {
+                System.out.println("get count: " + i);
+            }
+            String k = s + "-k-" + i;
+            String v = s + "-v-" + dummy + i;
+            String v2 = null;
+            try {
+                v2 = (String) c.get(k);
+            } catch (Exception e) {
+                System.out.println("get error key: " + k + ", "
+                        + e.getMessage());
+                throw e;
+            }
+
+            if (!v.equals(v2)) {
+                System.out.println("key: " + k + ", v1: " + v + ", v2: " + v2);
+            }
+            Thread.sleep(1);
+        }
+        time = System.currentTimeMillis() - time;
+        double t = ((double) (count / (double) time)) * 1000;
+        System.out.println("get qps: " + t);
     }
 
     public static void main(String[] args) {

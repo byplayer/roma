@@ -66,7 +66,6 @@ module Roma
         @each_vn_dump_sleep = 0.001
         @each_vn_dump_sleep_count = 100
         @each_clean_up_sleep = 0.01
-        @logic_clock_expire = 300
       end
 
       def ext_name= name
@@ -112,6 +111,10 @@ module Roma
       def option
         getOption
       end
+
+      def logical_clock_expire
+        getLogicalClockExpireTime
+      end
       
       def get_stat
         ret = {}
@@ -121,7 +124,7 @@ module Roma
         ret['storage.each_vn_dump_sleep'] = @each_vn_dump_sleep
         ret['storage.each_vn_dump_sleep_count'] = @each_vn_dump_sleep_count
         ret['storage.each_clean_up_sleep'] = @each_clean_up_sleep
-        ret['storage.logic_clock_expire'] = @logic_clock_expire
+        ret['storage.logic_clock_expire'] = logic_clock_expire
         ret
       end
 
@@ -261,6 +264,8 @@ module Roma
         @do_clean_up = true
         nt = Time.now.to_i
         getDataStores.each { |ds|
+          deletelist = []
+          # TODO separate the deleting code only from the following iteration
           ds.each{ |k, e|
             return unless @do_clean_up
             vn_stat = vnhash[e.vn]

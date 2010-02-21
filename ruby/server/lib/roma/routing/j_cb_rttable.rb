@@ -1,32 +1,11 @@
 # -*- coding: utf-8 -*-
-require 'roma/routing/rttable'
+require 'java'
+require 'jar/ROMA-java-server-0.1.0-jar-with-dependencies.jar'
+require 'roma/routing/j_rttable'
 
 module Roma
   module Routing
-    class JavaRoutingTable
-      attr :row_rttable
-
-      def initialize rd, fname
-        json_rd = JavaRT.to_json rd
-        rt_fact = JavaRTFactory.new
-        @row_rttable = rt_fact.newRoutingTable json_rd, fname 
-      end
-
-      # declare several methods
-
-    end # class JavaRoutingTable
-
-    class JavaRTFactory < Java::jp.co.rakuten.rit.roma.routing.RoutingTableFactory
-      def initialize
-        super
-      end
-
-      def initRoutingTable data, fname
-        JavaCBRT.new data, fname 
-      end
-    end # JavaRTFactory
-
-    class JavaCBRT < JavaRT
+    class JavaCBRoutingTable < JavaRoutingTable
       attr :fname
       attr :log_fd
       attr :log_name
@@ -37,8 +16,8 @@ module Roma
       attr_reader :version_of_nodes
       attr_reader :min_version
 
-      def initialize(rd,fname)
-        super(rd)
+      def initialize rd, fname
+        super rd
         @trans={}
         @fname=fname
         @leave_proc=nil
@@ -81,21 +60,33 @@ module Roma
       end
 
       def open_log
-        log_list=@rd.get_file_list(@fname)
-        if log_list.length==0
-          @log_name="#{@fname}.1"
+        log_list = get_file_list @fname
+        if log_list.length == 0
+          @log_name = "#{@fname}.1"
         else
           if File::stat("#{@fname}.#{log_list.last[0]}").size == 0
-            @log_name="#{@fname}.#{log_list.last[0]}"
+            @log_name = "#{@fname}.#{log_list.last[0]}"
           else
-            @log_name="#{@fname}.#{log_list.last[0]+1}"
+            @log_name = "#{@fname}.#{log_list.last[0]+1}"
           end
         end
-        @log_fd=File.open(@log_name,"a")      
+        @log_fd = File.open(@log_name,"a")      
+      end
+
+      def get_file_list(fname)
+        l = {}
+        files = Dir.glob("#{fname}*")
+        files.each{ |file|
+          if /#{fname}\.(\d+)$/ =~ file
+            l[$1.to_i] = $&
+          end
+        }
+        # sorted by old order
+        l.to_a.sort{|a,b| a[0] <=> b[0]}
       end
 
       def write_log_setroute(vn, clk, nids)
-        log="setroute #{vn} #{clk}"
+        log = "setroute #{vn} #{clk}"
         nids.each{ |nid| log << " #{nid}" }
         write_log(log)        
       end
@@ -117,13 +108,13 @@ module Roma
       end
 
       def can_i_recover?
-        @rd.nodes.length >= @rd.rn
+        nodes.length >= rn
       end
 
       # Retuens the list of losted-data vnode newer than argument time.
       def search_lost_vnodes(t)
         ret = []
-        @rd.each_log_all(@fname){|log_t,line|
+        each_log_all(@fname){ |log_t, line|
           next if t > log_t
           s = line.split(/ /)
           if s[0] == 'setroute' && s.length == 3
@@ -134,11 +125,23 @@ module Roma
         ret
       end
 
+      def each_log_one(fname)
+        File.open(fname, "r"){ |f|
+          while((line = f.gets) != nil)
+            line.chomp!
+            next if line[0] == "#" || line.length==0 
+            if line =~ /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.\d+\s(.+)/
+              yield Time.mktime($1, $2, $3, $4, $5, $6), $7 
+            end
+          end
+        }
+      end
+
       # select a vnodes where short of redundancy.
       def select_a_short_vnodes(exclued_nodes)
         ret = []
-        @rd.v_idx.each_pair{|vn, nids|
-          if nids.length < @rd.rn && list_include?(nids,exclued_nodes) == false
+        v_idx.each{ |vn, nids|
+          if nids.length < rn && list_include?(nids,exclued_nodes) == false
             ret << [vn,nids]
           end
         }
@@ -149,10 +152,10 @@ module Roma
       def sample_vnode(without_nodes)
         short_idx = {}
         idx = {}
-        @rd.v_idx.each_pair{|vn, nids|
+        v_idx.each{|vn, nids|
           unless list_include?(nids, without_nodes)
             idx[vn] = nids
-            short_idx[vn] = nids if nids.length < @rd.rn
+            short_idx[vn] = nids if nids.length < rn
           end
         }
         idx = short_idx if short_idx.length > 0
@@ -173,15 +176,15 @@ module Roma
       private :list_include?
 
       def set_route(vn, clk, nids)
-        return "#{vn} is not found." unless @rd.v_idx.key?(vn)
+        return "#{vn} is not found." unless v_idx.key?(vn)
         @lock.synchronize {
-          return "It's old table." if @rd.v_clk[vn] > clk
+          return "It's old table." if v_clk[vn] > clk
           nids.each{ |nid|
-            add_node(nid) unless @rd.nodes.include?(nid)
+            add_node(nid) unless nodes.include?(nid)
           }
-          @rd.v_idx[vn] = nids.clone
+          v_idx[vn] = nids.clone
           clk += 1
-          @rd.v_clk[vn] = clk
+          v_clk[vn] = clk
           @mtree.set(vn, nids)
           write_log_setroute(vn, clk, nids)
           return clk
@@ -189,9 +192,9 @@ module Roma
       end
 
       def add_node(nid)
-        unless @rd.nodes.include?(nid)
-          @rd.nodes << nid
-          @rd.nodes.sort!
+        unless nodes.include?(nid)
+          nodes << nid
+          nodes.sort!
           write_log("join #{nid}")
         end
       end
@@ -209,10 +212,10 @@ module Roma
         unless @enabled_failover
           return
         end
-        return unless @rd.nodes.include?(nid)
+        return unless nodes.include?(nid)
 
         @leave_proc.call(nid) if @leave_proc
-        @rd.nodes.delete(nid)
+        nodes.delete(nid)
         @version_of_nodes.delete(nid)
         @min_version = find_min_version
         
@@ -221,8 +224,12 @@ module Roma
         
         lost_vnodes=[]
         @lock.synchronize {
-          @rd.v_idx.each_pair{ |vn, nids|
-            buf = nids.clone
+          v_idx.each{ |vn, nids|
+            buf = []
+            nids.each { |n|
+              buf << n
+            }
+#            buf = nids.clone
             if buf.delete(nid)
               set_route_and_inc_clk_inside_sync(vn, buf)
               if buf.length == 0
@@ -244,9 +251,9 @@ module Roma
       end
 
       def set_route_and_inc_clk_inside_sync(vn, nodes)
-        @rd.v_idx[vn] = nodes
-        clk = @rd.v_clk[vn] + 1
-        @rd.v_clk[vn] = clk
+        v_idx[vn] = nodes
+        clk = v_clk[vn] + 1
+        v_clk[vn] = clk
         @mtree.set(vn, nodes)
         write_log_setroute(vn, clk, nodes)
         clk
@@ -255,31 +262,32 @@ module Roma
 
       def next_alive_vnode(vn)
         svn = vn
-        while( (vn = @rd.next_vnode(vn)) != svn )
-          return @rd.v_idx[vn].clone if @rd.v_idx[vn].length != 0
+        while( (vn = next_vnode(vn)) != svn )
+          return v_idx[vn].clone if v_idx[vn].length != 0
         end
         []
       end
       private :next_alive_vnode
 
       def each_vnode
-        @rd.v_idx.each_pair{ |k, v| yield(k, v) }
-      end
-
-      def v_idx
-        @rd.v_idx.clone
+        v_idx.each { |k, v|
+          yield k, v
+        }
       end
 
       def search_nodes_for_write(vn)
         return @trans[vn][0].clone if @trans.key?(vn)
-        @rd.v_idx[vn].clone
-      rescue
+#        v_idx[vn].clone
+        v_idx_vn_clone vn
+      rescue => e
         nil
       end
 
       def search_nodes_with_clk(vn)
         @lock.synchronize {
-          return [@rd.v_clk[vn], @rd.v_idx[vn].clone]
+#          return [@rd.v_clk[vn], v_idx[vn].clone]
+          list = v_idx_vn_clone vn
+          return [@rd.v_clk[vn], list]
         }
       rescue
         nil
@@ -296,12 +304,12 @@ module Roma
       def commit(vn)
         return false unless @trans.key?(vn)
         @lock.synchronize {
-          @rd.v_idx[vn]=@trans[vn][0]
+          v_idx[vn]=@trans[vn][0]
           @trans.delete(vn)
-          clk = @rd.v_clk[vn] + 1
-          @rd.v_clk[vn] = clk
-          @mtree.set(vn, @rd.v_idx[vn])
-          write_log_setroute(vn, clk, @rd.v_idx[vn])
+          clk = v_clk[vn] + 1
+          v_clk[vn] = clk
+          @mtree.set(vn, v_idx[vn])
+          write_log_setroute(vn, clk, v_idx[vn])
           return clk
         }
       end
@@ -322,7 +330,7 @@ module Roma
         n = (2**div_bits) / nodes.length
 
         pcount = scount = 0
-        @rd.v_idx.each_pair{ |vn, nids|
+        v_idx.each { |vn, nids|
           next if nids == nil or nids.length == 0
           if nids[0] == ap
             pcount += 1

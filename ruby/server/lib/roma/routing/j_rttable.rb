@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
+require 'java'
+require 'jar/ROMA-java-server-0.1.0-jar-with-dependencies.jar'
 require 'json'
 
 module Roma
   module Routing
-
-    class JavaRT < Java::jp.co.rakuten.rit.roma.routing.RoutingTable
+    class JavaRoutingTable < Java::jp.co.rakuten.rit.roma.routing.RoutingTable
       def self.to_json rd
         JSON.generate(
           [{ :dgst_bits => rd.dgst_bits, 
@@ -25,6 +26,7 @@ module Roma
 
       def initialize rd
         super rd
+        initRoutingData(JavaRoutingTable.to_json(rd))
         @log = Roma::Logging::RLogger.instance
         @hbits = 2**dgst_bits
         @fail_cnt = Hash.new(0)
@@ -36,7 +38,7 @@ module Roma
 
       def get_stat ap
         pn = sn = short = lost = 0
-        v_idx.each_pair{|vn, nids|
+        v_idx.each { |vn, nids|
           if nids == nil || nids.length == 0
             lost += 1
             next
@@ -51,7 +53,7 @@ module Roma
         ret = {}
         ret['routing.redundant'] = rn
         ret['routing.nodes.length'] = nodes.size
-        ret['routing.nodes'] = nodes.toString
+        ret['routing.nodes'] = nodes.inspect
         ret['routing.dgst_bits'] = dgst_bits
         ret['routing.div_bits'] = div_bits
         ret['routing.vnodes.length'] = vnodes.size
@@ -91,12 +93,26 @@ module Roma
         getVirtualNodeIndexes
       end
 
+      def v_idx_vn_clone vn
+        nodes = v_idx[vn]
+        ret = []
+        nodes.each { |n|
+          ret << n
+        }
+        ret
+      end
+
       def v_clk
         getVirtualNodeClocks
       end
 
-      def nodes
-        getNodeIDs.clone
+      def nodes # TODO
+        javalist = getNodeIDs
+        ret = []
+        javalist.each { |l|
+          ret << l
+        }
+        ret
       end
 
       def nodes= ns
@@ -121,7 +137,7 @@ module Roma
 
       def leave nid
         nodes.delete nid
-        v_idx.each_pair{ |vn, nids|
+        v_idx.each { |vn, nids|
           nids.delete_if{ |nid2| nid2 == nid}
           if nids.length == 0
             @log.error("Vnode data is lost.(Vnode=#{vn})")
@@ -159,6 +175,7 @@ module Roma
       end
 
       def next_vnode(vn)
+        # TODO
         n = (vn >> (dgst_bits - div_bits)) + 1
         n = 0 if n == (2**(div_bits))
         n << (dgst_bits - div_bits)

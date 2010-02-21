@@ -21,6 +21,8 @@ public abstract class AbstractStorage {
 
     private long[] virtualNodeIDs;
 
+    private long logicalClockExpireTime = 300;
+
     private String option;
 
     private Map<Long, Integer> virtualNodeIDMap;
@@ -135,7 +137,8 @@ public abstract class AbstractStorage {
     public void createDataStores() throws StorageException {
         dataStores = new DataStore[getDivisionNumber()];
         for (int i = 0; i < dataStores.length; ++i) {
-            String fileName = getStoragePathName() + "/" + i + "." + getFileExtensionName();
+            String fileName = getStoragePathName() + "/" + i + "."
+                    + getFileExtensionName();
             dataStores[i] = dsFactory.newDataStore(fileName,
                     getFileExtensionName(), getOption(), deFactory, lcFactory);
             dataStores[i].open();
@@ -167,10 +170,18 @@ public abstract class AbstractStorage {
                 .newLogicalClock(lClock), expire, value);
     }
 
+    public int compare(LogicalClock lc1, LogicalClock lc2) {
+        return lc1.compareTo(lc2);
+    }
+
     public int compareLogicalClock(long lc1, long lc2) {
         LogicalClock lc1obj = lcFactory.newLogicalClock(lc1);
         LogicalClock lc2obj = lcFactory.newLogicalClock(lc2);
         return lc1obj.compareTo(lc2obj);
+    }
+
+    public long getLogicalClockExpireTime() {
+        return logicalClockExpireTime;
     }
 
     public DataEntry getDataEntry(DataEntry entry) throws StorageException {

@@ -433,7 +433,7 @@ module Roma
           send_data("EXISTS\r\n")
         else
           redundant(nodes, hname, k, d, ret[2], expt, ret[4])
-          send_data("STORED\r\n")          
+          send_data("STORED\r\n")
         end
       end
 
@@ -442,7 +442,7 @@ module Roma
           return redundant_older_than_000306(nodes, hname, k, d, clk, expt, v)
         end
 
-        if @stats.size_of_zredundant > 0 && @stats.size_of_zredundant < v.length 
+        if @stats.size_of_zredundant > 0 && @stats.size_of_zredundant < v.length
           return zredundant(nodes, hname, k, d, clk, expt, v)
         end
 
@@ -572,7 +572,7 @@ module Roma
           @log.debug("f#{fnc} failed key = #{s[1]} vn = #{vn}")
           return send_data("SERVER_ERROR Routing table is inconsistent.\r\n")
         end
-        
+
         nodes.delete(@nid)
         store_incr_decr(fnc, hname, vn, key, d, v, nodes)
       end

@@ -96,7 +96,7 @@ public class DataEntry {
         return value;
     }
 
-    private static long getNow() {
+    public static long getNow() {
         return System.currentTimeMillis() / 1000;
     }
 
