@@ -28,11 +28,13 @@ module Roma
     HANDLER_CLASS = Roma::Event::JavaHandler
 
     # routing setting
-    RTTABLE_CLASS = Roma::Routing::JavaChurnBasedRoutingTable
+#    RTTABLE_CLASS = Roma::Routing::JavaCBRoutingTable
+    RTTABLE_CLASS = Roma::Routing::ChurnbasedRoutingTable
     RTTABLE_PATH = '.'
 
     # storage setting
     STORAGE_CLASS = Roma::Storage::JavaHashStorage
+#    STORAGE_CLASS = Roma::Storage::RubyHashStorage
     STORAGE_DIVNUM = 10
     STORAGE_PATH = '.'
     STORAGE_DUMP_PATH = '/tmp'
