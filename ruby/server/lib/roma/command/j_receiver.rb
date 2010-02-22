@@ -33,7 +33,9 @@ module Roma
         recv.setRoutingTable @rttable
         recv.stats = @stats
         recv.nid = @stats.ap_str
+        recv.setLocalNodeID @stats.ap_str
         recv.defhash = 'roma'
+        recv.setDefaultHashName 'roma'
         recv.log = @log
       end
     end

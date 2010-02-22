@@ -91,6 +91,7 @@ public abstract class HandlerBase {
 
     private void initJavaCommands() {
         addJavaCommandMap(StorageCommands.GetCommand.class);
+        addJavaCommandMap(StorageCommands.GetsCommand.class);
         addJavaCommandMap(SystemCommands.QuitCommand.class);
     }
 
@@ -136,19 +137,27 @@ public abstract class HandlerBase {
             return;
         }
 
-        String aliasName = command.getName();
-        if (!commandMap.containsKey(aliasName)) {
-            javaCommandMap.put(aliasName, command);
-            addCommandMap(aliasName, aliasName);
+        String aliasName = command.getAliasName();
+        String name = command.getName();
+        if (commandMap.containsKey(aliasName)) {
+            // a same name has been registered already
+            removeCommandMap(aliasName);
         }
+        addJavaCommandMap(aliasName, name, command);
     }
 
     public Command getJavaCommandMap(String aliasName) {
         return javaCommandMap.get(aliasName);
     }
 
-    public Command removeJavaCommandMap(String aliasName) {
-        return javaCommandMap.remove(aliasName);
+    public void addJavaCommandMap(String aliasName, String name, Command command) {
+        javaCommandMap.put(aliasName, command);
+        addCommandMap(aliasName, name);
+    }
+
+    public void removeCommandMap(String aliasName) {
+        commandMap.remove(aliasName);
+        javaCommandMap.remove(aliasName);
     }
 
     public void addCommandMap(String aliasName, String methodName) {
@@ -157,10 +166,6 @@ public abstract class HandlerBase {
 
     public String getCommandMap(String aliasName) {
         return commandMap.get(aliasName);
-    }
-
-    public String removeCommandMap(String aliasName) {
-        return commandMap.remove(aliasName);
     }
 
     public void initConnectionPool(ConnectionPoolFactory connPoolFactory,

@@ -25,6 +25,10 @@ public class Receiver {
 
     private RoutingTable routingTable;
 
+    private String defaultHashName;
+
+    private String localNodeID;
+
     public Receiver(HandlerBase handler, Session sess) {
         this.handler = handler;
         this.sess = sess;
@@ -47,10 +51,6 @@ public class Receiver {
         handler.getConnectionPool().put(nodeID, conn);
     }
 
-    public String getCommandName(String aliasName) {
-        return handler.getCommandMap(aliasName);
-    }
-
     public void stopEventLoop() {
         handler.stopService();
     }
@@ -69,6 +69,26 @@ public class Receiver {
 
     public RoutingTable getRoutingTable() {
         return routingTable;
+    }
+
+    public void setDefaultHashName(String hashName) {
+        defaultHashName = hashName;
+    }
+
+    public String getDefaultHashName() {
+        return defaultHashName;
+    }
+
+    public void setLocalNodeID(String localNodeID) {
+        this.localNodeID = localNodeID;
+    }
+
+    public String getLocalNodeID() {
+        return localNodeID;
+    }
+
+    public String getCommandName(String aliasName) {
+        return handler.getCommandMap(aliasName);
     }
 
     public byte[] readBytes(int len) throws IOException {
@@ -98,10 +118,10 @@ public class Receiver {
     public int execCommand() throws Exception {
         String[] commands = sess.getCommands();
         if (commands.length != 1
-                && getCommandName(commands[0]).startsWith("exev_")) {
+                && handler.getCommandMap(commands[0]).startsWith("exev_")) {
             if (keys.putIfAbsent(commands[1], commands[1]) == null) {
                 int ret = execCommand0(commands);
-                if (getCommandName(commands[0]).startsWith("exev_")) {
+                if (handler.getCommandMap(commands[0]).startsWith("exev_")) {
                     keys.remove(commands[1]);
                 }
                 return ret;
