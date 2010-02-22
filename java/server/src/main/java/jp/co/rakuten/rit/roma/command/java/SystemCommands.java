@@ -2,10 +2,14 @@ package jp.co.rakuten.rit.roma.command.java;
 
 import jp.co.rakuten.rit.roma.command.Command;
 import jp.co.rakuten.rit.roma.command.Receiver;
-import jp.co.rakuten.rit.roma.storage.BasicStorage;
 
 public class SystemCommands {
     public static class QuitCommand extends Command {
+        @Override
+        public String getAliasName() {
+            return "quit";
+        }
+
         @Override
         public String getName() {
             return "quit";
