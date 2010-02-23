@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jp.co.rakuten.rit.roma.command.Command;
+import jp.co.rakuten.rit.roma.command.Connection;
 import jp.co.rakuten.rit.roma.command.ErrorMessage;
 import jp.co.rakuten.rit.roma.command.Receiver;
 import jp.co.rakuten.rit.roma.routing.RoutingTable;
@@ -36,15 +37,33 @@ public class StorageCommands {
         return 0;
     }
 
-    public static byte[] forwardGet(Receiver receiver, String[] commands)
-            throws Exception {
-        LOG.warn("forward get " + commands[1]);
-        // TODO
-        return null;
+    public static DataEntry forwardGet(Receiver receiver, String nodeID,
+            String key) throws Exception {
+        // TODO exception handling
+        Connection conn = receiver.getConnection(nodeID);
+        conn.writeString("fget " + key + CRLF);
+        String res = conn.gets();
+        if (res.equals("END\r\n")) {
+            return null;
+        } else if (res.startsWith("SERVER_ERROR")) {
+            throw new CommandForwardingException(res);
+        } else if (res.startsWith("VALUE")) {
+            String[] splited = res.split(" ");
+            byte[] b = conn.readBytes(Integer.parseInt(splited[3]));
+            conn.readBytes(2); // \r\n
+            conn.readBytes(5); // END\r\n
+            BasicStorage storage = receiver.getStorages().get(
+                    receiver.getDefaultHashName());
+            DataEntry e = storage.createDataEntry(key, 0, 0, 0, 0, b);
+            return e;
+        } else {
+            throw new RuntimeException("fatal error");
+        }
     }
 
-    public static Object forwardGets(Receiver receiver, String[] commands)
+    public static List<DataEntry> forwardGets(Receiver receiver, String[] commands)
             throws Exception {
+        // TODO
         return null;
     }
 
@@ -62,6 +81,7 @@ public class StorageCommands {
         @Override
         public Object execute(Receiver receiver, String[] commands)
                 throws Exception {
+            // TODO exception handling
             if (commands.length > 2) {
                 return GetsCommand.execute0(receiver, commands);
             }
@@ -81,11 +101,29 @@ public class StorageCommands {
             List<String> nodeIDs = rttable.searchNodeIDs(vnodeID);
 
             if (!nodeIDs.contains(receiver.getLocalNodeID())) {
-                byte[] res = forwardGet(receiver, commands);
-                if (res != null) {
-                    receiver.writeBytes(res);
-                } else {
-                    receiver.writeString(SERVER_ERROR_FORWARD);
+                LOG.warn("forward get " + commands[1]);
+                try {
+                    DataEntry e = null;
+                    try {
+                        e = forwardGet(receiver, nodeIDs.get(0), commands[1]);
+                    } catch (CommandForwardingException ex) {
+                        LOG.error(ex.getMessage());
+                        receiver.writeString(ex.getMessage());
+                    }
+                    if (e != null) {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("VALUE ");
+                        sb.append(key);
+                        sb.append(" 0 ");
+                        sb.append(e.getValue().length);
+                        sb.append(CRLF);
+                        receiver.writeString(sb.toString());
+                        receiver.writeBytes(e.getValue());
+                        receiver.writeString(CRLF);
+                    }
+                    receiver.writeString("END" + CRLF);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
                 return null;
             }

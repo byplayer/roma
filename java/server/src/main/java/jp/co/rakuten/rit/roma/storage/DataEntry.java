@@ -21,7 +21,7 @@ public class DataEntry {
     private long expire; // long
 
     private byte[] value;
-
+    
     public DataEntry(String key, long vnodeID, long pClock,
             LogicalClock lClock, long expire, byte[] data) {
         this.key = key;
