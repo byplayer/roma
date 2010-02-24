@@ -73,7 +73,8 @@ public class TCHashDataStore implements DataStore {
         if (!tchdb.open(getStoragePathName(), HDB.OWRITER | HDB.OCREAT
                 | HDB.ONOLCK)) {
             int ecode = tchdb.ecode();
-            throw new StorageException("open error: " + HDB.errmsg(ecode));
+            StorageException e = new StorageException("open error: " + HDB.errmsg(ecode));
+            LOG.error("open error", e);
         }
     }
 

@@ -70,12 +70,12 @@ public class StorageCommands {
     public static class GetCommand extends Command implements ErrorMessage {
         @Override
         public String getAliasName() {
-            return "javaget";
+            return "get";
         }
 
         @Override
         public String getName() {
-            return "ev_javaget";
+            return "ev_get";
         }
 
         @Override
@@ -117,9 +117,9 @@ public class StorageCommands {
                         sb.append(" 0 ");
                         sb.append(e.getValue().length);
                         sb.append(CRLF);
-                        receiver.writeString(sb.toString());
-                        receiver.writeBytes(e.getValue());
-                        receiver.writeString(CRLF);
+                        receiver.writeStringNotFlush(sb.toString());
+                        receiver.writeBytesNotFlush(e.getValue());
+                        receiver.writeStringNotFlush(CRLF);
                     }
                     receiver.writeString("END" + CRLF);
                 } catch (Exception e) {
@@ -146,9 +146,9 @@ public class StorageCommands {
                 sb.append(" 0 ");
                 sb.append(value.length);
                 sb.append(CRLF);
-                receiver.writeString(sb.toString());
-                receiver.writeBytes(value);
-                receiver.writeString(CRLF);
+                receiver.writeStringNotFlush(sb.toString());
+                receiver.writeBytesNotFlush(value);
+                receiver.writeStringNotFlush(CRLF);
             }
             receiver.writeString("END" + CRLF);
             return null;
@@ -237,9 +237,9 @@ public class StorageCommands {
                 sb.append(" 0 ");
                 sb.append(value.length);
                 sb.append(CRLF);
-                receiver.writeString(sb.toString());
-                receiver.writeBytes(value);
-                receiver.writeString(CRLF);
+                receiver.writeStringNotFlush(sb.toString());
+                receiver.writeBytesNotFlush(value);
+                receiver.writeStringNotFlush(CRLF);
             }
             receiver.writeString("END" + CRLF);
             return null;

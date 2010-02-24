@@ -22,9 +22,7 @@ public class NetSpyMemcachedTest {
                             ConnectionFactory cf = cfb.build();
 
                             List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-                             addresses.add(
-//                                     new InetSocketAddress("10.162.127.48", 11311));
-                                      new InetSocketAddress("localhost", 11211));
+                             addresses.add(new InetSocketAddress("localhost", 11211));
                             MemcachedClient memc = new MemcachedClient(cf,
                                     addresses);
                             small_loop(memc);
@@ -59,7 +57,7 @@ public class NetSpyMemcachedTest {
 
     private void small_loop(MemcachedClient c) throws Exception {
         String s = Thread.currentThread().toString();
-        int count = 1000;
+        int count = 10000;
 
         long time1 = System.currentTimeMillis();
         for (int i = 0; i < count; ++i) {
@@ -76,12 +74,13 @@ public class NetSpyMemcachedTest {
                 throw e;
             }
 //            System.out.println("set: k: " + k + ", v: " + v);
-            Thread.sleep(1);
+//            Thread.sleep(1);
         }
         time1 = System.currentTimeMillis() - time1;
         double t1 = ((double) (count / (double) time1)) * 1000;
         System.out.println("put qps: " + t1);
 
+	/*
         long time = System.currentTimeMillis();
         for (int i = 0; i < count; ++i) {
             if (i % 1000 == 0) {
@@ -106,6 +105,7 @@ public class NetSpyMemcachedTest {
         time = System.currentTimeMillis() - time;
         double t = ((double) (count / (double) time)) * 1000;
         System.out.println("get qps: " + t);
+	*/
     }
 
     public static void main(String[] args) {
@@ -119,9 +119,7 @@ public class NetSpyMemcachedTest {
             ConnectionFactory cf = cfb.build();
 
             List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-            addresses.add(
-                    new InetSocketAddress("localhost", 11211));
-//                    new InetSocketAddress("10.162.127.48", 11311));
+            addresses.add(new InetSocketAddress("localhost", 11211));
             memc = new MemcachedClient(cf, addresses);
             // memc = new MemcachedClient(new InetSocketAddress("localhost",
             // 11211));
