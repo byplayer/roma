@@ -75,6 +75,8 @@ public class HandlerImpl extends HandlerBase {
 
     private int eventExecutorNumber;
 
+    private int selectInterval = 100;
+
     private ExecutorService eventExecutor;
 
     BlockingQueue<Receiver> eventQueue;
@@ -142,9 +144,9 @@ public class HandlerImpl extends HandlerBase {
 
     private void startEventLoop() throws IOException {
         while (enabledEventLoop) {
-            // selector.select(selectInterval);
-            // selector.selectNow();
-            selector.select();
+            selector.select(selectInterval);
+            //selector.selectNow();
+            //selector.select();
             reregisterChannels();
 
             for (Iterator<SelectionKey> keys = selector.selectedKeys()
@@ -155,16 +157,13 @@ public class HandlerImpl extends HandlerBase {
                 if (!key.isValid()) {
                     continue;
                 }
-                if (key.isValid() && key.isAcceptable()) {
+                if (key.isAcceptable()) {
                     handleAcceptable(key);
-                }
-                if (key.isValid() && key.isReadable()) {
+                } else if (key.isReadable()) {
                     handleReadable(key);
-                }
-                if (key.isValid() && key.isConnectable()) {
+                } else if (key.isConnectable()) {
                     // ignore
-                }
-                if (key.isValid() && key.isWritable()) {
+                } else  if (key.isWritable()) {
                     // ignore
                 }
             }
@@ -234,9 +233,6 @@ public class HandlerImpl extends HandlerBase {
         }
         if (commandLine != null) {
             receiver.setCommands(commandLine);
-            // System.out.println("# cl: " + commandLine);
-            // System.out.println("# key: " + key);
-            // System.out.println("# channel: " + key.channel());
             try {
                 key.cancel();
                 synchronized (reregisterChannels) {

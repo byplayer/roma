@@ -59,7 +59,7 @@ module Roma
       def execCommand cmds
         s = []
         cmds.each{ |cmd| s << cmd }
-        puts "command name: #{s[0].downcase}"
+#        puts "command name: #{s[0].downcase}"
 #        puts "method name: #{getCommandName(s[0].downcase)}"
         begin
           self.send(getCommandName(s[0].downcase), s)

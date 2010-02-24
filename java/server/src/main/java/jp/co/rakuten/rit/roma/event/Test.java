@@ -12,6 +12,7 @@ public class Test {
                 new ConnectionPoolFactory(),
                 new ConnectionFactory());
         handler.addCommandMap("set", "exev_set");
+        handler.addCommandMap("get", "get");
         handler.run(new ReceiverFactory());
     }
 }

@@ -111,8 +111,16 @@ public class Receiver {
         sess.writeBytes(bytes);
     }
 
+    public void writeBytesNotFlush(byte[] bytes) throws IOException {
+        sess.writeBytesNotFlush(bytes);
+    }
+
     public void writeString(String data) throws IOException {
         sess.writeString(data);
+    }
+
+    public void writeStringNotFlush(String data) throws IOException {
+        sess.writeStringNotFlush(data);
     }
 
     public int execCommand() throws Exception {
@@ -178,7 +186,20 @@ public class Receiver {
     }
 
     public void execGetCommand(String[] commands) throws IOException {
-        // TODO
+        // command[0]: command
+        // commands[1..-1]: keys
+        byte[] b = "bar".getBytes();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i < commands.length; ++i) {
+            sb.append("VALUE ");
+            sb.append(commands[i]);
+            sb.append(" 0 ");
+            sb.append(b.length);
+            sb.append("\r\n");
+            sb.append("bar\r\n");
+        }
+        sb.append("END\r\n");
+        writeString(sb.toString());
     }
 
     public void execBalseCommand(String[] commands) throws IOException {

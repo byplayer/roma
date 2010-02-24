@@ -1,5 +1,6 @@
 package jp.co.rakuten.rit.roma.command;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -18,6 +19,8 @@ public class Session {
 
     private SocketChannel channel;
 
+    private OutputStream out;
+
     private ByteBuffer tmpBuf;
 
     private String[] commands;
@@ -26,6 +29,11 @@ public class Session {
         this.channel = channel;
         tmpBuf = ByteBuffer.allocate(TMP_BUF_SIZE);
         commands = null;
+        try {
+            out = new BufferedOutputStream(getSocketChannel().socket().getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public SocketChannel getSocketChannel() {
@@ -141,13 +149,20 @@ public class Session {
     }
 
     public void writeBytes(byte[] bytes) throws IOException {
-        OutputStream out = getSocketChannel().socket().getOutputStream();
         out.write(bytes);
         out.flush();
     }
 
+    public void writeBytesNotFlush(byte[] bytes) throws IOException {
+        out.write(bytes);
+    }
+
     public void writeString(String data) throws IOException {
         writeBytes(data.getBytes());
+    }
+
+    public void writeStringNotFlush(String data) throws IOException {
+        writeBytesNotFlush(data.getBytes());
     }
 
     public void close() throws IOException {
