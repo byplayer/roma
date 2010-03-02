@@ -22,11 +22,11 @@ public class NetSpyMemcachedTest {
                             ConnectionFactory cf = cfb.build();
 
                             List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-                            addresses.add(new InetSocketAddress("10.162.127.146", 11211));
+                            addresses.add(new InetSocketAddress("10.160.56.171", 11211));
                             MemcachedClient memc = new MemcachedClient(cf,
                                     addresses);
-                            small_loop(memc);
-                            small_loop(memc);
+                            small_loop0(memc);
+//                            small_loop(memc);
                             memc.shutdown();
                         } else {
                             small_loop(c);
@@ -53,6 +53,38 @@ public class NetSpyMemcachedTest {
         }
         sb.append('-');
         return sb.toString();
+    }
+
+    private void small_loop0(MemcachedClient c) throws Exception {
+        String s = Thread.currentThread().toString();
+        int count = 10000;
+        
+        for (int i = 0; i < count; ++i) {
+            if (i % 1000 == 0) {
+                System.out.println("put count: " + i);
+            }
+            ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder();
+            cfb.setOpTimeout(3 * 1000L);
+            ConnectionFactory cf = cfb.build();
+
+            List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+            addresses.add(new InetSocketAddress("10.160.56.171", 11211));
+            MemcachedClient memc = new MemcachedClient(cf,
+                    addresses);
+            String k = s;
+            try {
+                Object obj = memc.get(k);
+                if (obj != null) {
+                    memc.incr(k, 1);
+                } else {
+                    memc.set(k, 0, 1).get();
+                }
+            } catch (Exception e) {
+                throw e;
+            }
+            memc.shutdown();
+            Thread.sleep(10);
+        }
     }
 
     private void small_loop(MemcachedClient c) throws Exception {
@@ -118,7 +150,7 @@ public class NetSpyMemcachedTest {
             ConnectionFactory cf = cfb.build();
 
             List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-            addresses.add(new InetSocketAddress("10.162.127.146", 11211));
+            addresses.add(new InetSocketAddress("10.168.56.171", 11211));
             memc = new MemcachedClient(cf, addresses);
 
             // t.big_loop(1, memc);
