@@ -3,7 +3,7 @@ require 'roma/event/handler'
 require 'roma/event/rsok_handler'
 require 'roma/routing/cb_rttable'
 
-if JRUBY_VERSION
+if defined? JRUBY_VERSION
   require 'roma/storage/j_tc_storage'
   #require 'roma/storage/j_jh_storage'
   require 'roma/event/j_handler'
