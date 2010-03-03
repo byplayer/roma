@@ -240,8 +240,6 @@ module Roma
 
         if Config.const_defined? :RTTABLE_CLASS
           @rttable = Config::RTTABLE_CLASS.new(rd,fname)
-#          require 'roma/routing/j_rttable'
-#          Roma::Routing::JavaRoutingTable.new rd, fname
         else
           @rttable = Roma::Routing::ChurnbasedRoutingTable.new(rd,fname)
         end
@@ -307,8 +305,21 @@ module Roma
     end
 
     def get_routedump(nid)
+      rcv = receive_routing_dump(nid, "routingdump bin\r\n")
+      unless rcv
+        rcv = receive_routing_dump(nid, "routingdump\r\n")
+        rd = Marshal.load(rcv)
+      else
+        rd = Routing::RoutingData.decode_binary(rcv)
+      end
+      rd
+    rescue
+      nil
+    end
+
+    def receive_routing_dump(nid, cmd)
       con = Config::HANDLER_CLASS::con_pool.get_connection(nid)
-      con.write("routingdump\r\n")
+      con.write(cmd)
       len = con.gets
       if len.to_i <= 0
         con.close
@@ -321,11 +332,10 @@ module Roma
       end
       con.read(2)
       con.gets
-      rd = Marshal.load(rcv)
-      Config::HANDLER_CLASS::con_pool.return_connection(nid, con)
-      rd
-    rescue => e
-      nil
+      Config::HANDLER_CLASS::con_pool.return_connection(nid,con)
+      rcv
+    rescue
+      nil      
     end
 
     def acquire_vnodes
