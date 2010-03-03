@@ -39,9 +39,8 @@ module Roma
         @log.error("#{@stats.ap_str} is already running.")
         return
       end
-      @storages.each{|hashname,st|
-        st.opendb
-      }
+
+      start_storages
       start_async_process
       start_wb_process
       start_timer
@@ -434,6 +433,12 @@ module Roma
           ver = ($1.to_i << 16) + ($2.to_i << 8) + $3.to_i
           @rttable.set_version(nid, ver)
         end
+      }
+    end
+
+    def start_storages
+      @storages.each{|hashname, st|
+        st.opendb
       }
     end
 

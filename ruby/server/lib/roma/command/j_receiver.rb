@@ -28,10 +28,14 @@ module Roma
 
       def postReceiverInit recv
         recv.storages = @storages
+        recv.setStorages @storages
         recv.rttable = @rttable
+        recv.setRoutingTable @rttable
         recv.stats = @stats
         recv.nid = @stats.ap_str
+        recv.setLocalNodeID @stats.ap_str
         recv.defhash = 'roma'
+        recv.setDefaultHashName 'roma'
         recv.log = @log
       end
     end
@@ -54,10 +58,8 @@ module Roma
 
       def execCommand cmds
         s = []
-        cmds.each{ |cmd|
-          s << cmd
-        }
-        puts "command name: #{s[0].downcase}"
+        cmds.each{ |cmd| s << cmd }
+#        puts "command name: #{s[0].downcase}"
 #        puts "method name: #{getCommandName(s[0].downcase)}"
         begin
           self.send(getCommandName(s[0].downcase), s)

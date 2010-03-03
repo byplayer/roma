@@ -663,7 +663,7 @@ module Roma
         st.each_clean_up(t, vnhash){|key, vn|
           count += 1
           @stats.out_count += 1
-#          @log.debug("#{__method__}:key=#{key} vn=#{vn}")
+          @log.debug("#{__method__}:key=#{key} vn=#{vn}")
           nodes = @rttable.search_nodes_for_write(vn)
           next if(nodes.length <= 1)
           nodes[1..-1].each{|nid|

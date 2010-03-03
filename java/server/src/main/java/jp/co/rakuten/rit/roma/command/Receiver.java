@@ -1,23 +1,33 @@
 package jp.co.rakuten.rit.roma.command;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import jp.co.rakuten.rit.roma.event.HandlerBase;
+import jp.co.rakuten.rit.roma.routing.RoutingTable;
+import jp.co.rakuten.rit.roma.storage.BasicStorage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Receiver {
-    private static final Logger LOG =
-        LoggerFactory.getLogger(Receiver.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Receiver.class);
 
     private static ConcurrentMap<String, String> keys = new ConcurrentHashMap<String, String>();
 
     private HandlerBase handler;
 
     private Session sess;
+
+    private Map<String, BasicStorage> storages;
+
+    private RoutingTable routingTable;
+
+    private String defaultHashName;
+
+    private String localNodeID;
 
     public Receiver(HandlerBase handler, Session sess) {
         this.handler = handler;
@@ -41,12 +51,44 @@ public class Receiver {
         handler.getConnectionPool().put(nodeID, conn);
     }
 
-    public String getCommandName(String aliasName) {
-        return handler.getCommandMap(aliasName);
-    }
-
     public void stopEventLoop() {
         handler.stopService();
+    }
+
+    public void setStorages(Map<String, BasicStorage> storages) {
+        this.storages = storages;
+    }
+
+    public Map<String, BasicStorage> getStorages() {
+        return storages;
+    }
+
+    public void setRoutingTable(RoutingTable routingTable) {
+        this.routingTable = routingTable;
+    }
+
+    public RoutingTable getRoutingTable() {
+        return routingTable;
+    }
+
+    public void setDefaultHashName(String hashName) {
+        defaultHashName = hashName;
+    }
+
+    public String getDefaultHashName() {
+        return defaultHashName;
+    }
+
+    public void setLocalNodeID(String localNodeID) {
+        this.localNodeID = localNodeID;
+    }
+
+    public String getLocalNodeID() {
+        return localNodeID;
+    }
+
+    public String getCommandName(String aliasName) {
+        return handler.getCommandMap(aliasName);
     }
 
     public byte[] readBytes(int len) throws IOException {
@@ -69,17 +111,25 @@ public class Receiver {
         sess.writeBytes(bytes);
     }
 
+    public void writeBytesNotFlush(byte[] bytes) throws IOException {
+        sess.writeBytesNotFlush(bytes);
+    }
+
     public void writeString(String data) throws IOException {
         sess.writeString(data);
+    }
+
+    public void writeStringNotFlush(String data) throws IOException {
+        sess.writeStringNotFlush(data);
     }
 
     public int execCommand() throws Exception {
         String[] commands = sess.getCommands();
         if (commands.length != 1
-                && getCommandName(commands[0]).startsWith("exev_")) {
+                && handler.getCommandMap(commands[0]).startsWith("exev_")) {
             if (keys.putIfAbsent(commands[1], commands[1]) == null) {
                 int ret = execCommand0(commands);
-                if (getCommandName(commands[0]).startsWith("exev_")) {
+                if (handler.getCommandMap(commands[0]).startsWith("exev_")) {
                     keys.remove(commands[1]);
                 }
                 return ret;
@@ -90,7 +140,7 @@ public class Receiver {
             return execCommand0(commands);
         }
     }
-    
+
     private int execCommand0(String[] commands) throws Exception {
         String commandName = commands[0].toLowerCase();
         Command command = handler.getJavaCommandMap(commandName);
@@ -136,7 +186,20 @@ public class Receiver {
     }
 
     public void execGetCommand(String[] commands) throws IOException {
-        // TODO
+        // command[0]: command
+        // commands[1..-1]: keys
+        byte[] b = "bar".getBytes();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i < commands.length; ++i) {
+            sb.append("VALUE ");
+            sb.append(commands[i]);
+            sb.append(" 0 ");
+            sb.append(b.length);
+            sb.append("\r\n");
+            sb.append("bar\r\n");
+        }
+        sb.append("END\r\n");
+        writeString(sb.toString());
     }
 
     public void execBalseCommand(String[] commands) throws IOException {

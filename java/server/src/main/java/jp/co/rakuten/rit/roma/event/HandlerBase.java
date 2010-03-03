@@ -14,13 +14,15 @@ import jp.co.rakuten.rit.roma.command.ConnectionFactory;
 import jp.co.rakuten.rit.roma.command.ConnectionPool;
 import jp.co.rakuten.rit.roma.command.ConnectionPoolFactory;
 import jp.co.rakuten.rit.roma.command.ReceiverFactory;
+import jp.co.rakuten.rit.roma.command.java.StorageCommands;
+import jp.co.rakuten.rit.roma.command.java.SystemCommands;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class HandlerBase {
-    private static final Logger LOG =
-        LoggerFactory.getLogger(HandlerBase.class);
+    private static final Logger LOG = LoggerFactory
+            .getLogger(HandlerBase.class);
 
     class ServiceImpl implements Runnable {
 
@@ -39,9 +41,9 @@ public abstract class HandlerBase {
     }
 
     private static final int DEFAULT_BUFFER_SIZE = 8192;
-    
+
     protected String hostName;
-    
+
     protected int port;
 
     protected ServerSocketChannel serverSocketChannel;
@@ -56,11 +58,11 @@ public abstract class HandlerBase {
 
     private ConnectionPool connPool;
 
-    private Map<String, String> commandMap =
-        Collections.synchronizedMap(new HashMap<String, String>());
+    private Map<String, String> commandMap = Collections
+            .synchronizedMap(new HashMap<String, String>());
 
-    private Map<String, Command> javaCommandMap =
-        Collections.synchronizedMap(new HashMap<String, Command>());
+    private Map<String, Command> javaCommandMap = Collections
+            .synchronizedMap(new HashMap<String, Command>());
 
     public void run(ReceiverFactory recvFactory) throws IOException {
         init();
@@ -86,9 +88,11 @@ public abstract class HandlerBase {
         serverSocketChannel.socket().bind(new InetSocketAddress(port));
         LOG.info("bind port: " + port);
     }
-    
+
     private void initJavaCommands() {
-//        addJavaCommandMap(SystemCommands.QuitCommand.class);
+        addJavaCommandMap(StorageCommands.GetCommand.class);
+        addJavaCommandMap(StorageCommands.GetsCommand.class);
+        addJavaCommandMap(SystemCommands.QuitCommand.class);
     }
 
     public void start() throws IOException {
@@ -120,7 +124,7 @@ public abstract class HandlerBase {
         } catch (IOException e) {
         }
     }
-    
+
     public void addJavaCommandMap(Class<? extends Command> commandName) {
         Command command = null;
         try {
@@ -133,33 +137,38 @@ public abstract class HandlerBase {
             return;
         }
 
-        String aliasName = command.getName();
-        if (!commandMap.containsKey(aliasName)) {
-            javaCommandMap.put(aliasName, command);
+        String aliasName = command.getAliasName();
+        String name = command.getName();
+        if (commandMap.containsKey(aliasName)) {
+            // a same name has been registered already
+            removeCommandMap(aliasName);
         }
+        addJavaCommandMap(aliasName, name, command);
     }
-    
+
     public Command getJavaCommandMap(String aliasName) {
         return javaCommandMap.get(aliasName);
     }
 
-    public Command removeJavaCommandMap(String aliasName) {
-        return javaCommandMap.remove(aliasName);
+    public void addJavaCommandMap(String aliasName, String name, Command command) {
+        javaCommandMap.put(aliasName, command);
+        addCommandMap(aliasName, name);
+    }
+
+    public void removeCommandMap(String aliasName) {
+        commandMap.remove(aliasName);
+        javaCommandMap.remove(aliasName);
     }
 
     public void addCommandMap(String aliasName, String methodName) {
         commandMap.put(aliasName, methodName);
     }
-    
+
     public String getCommandMap(String aliasName) {
         return commandMap.get(aliasName);
     }
 
-    public String removeCommandMap(String aliasName) {
-        return commandMap.remove(aliasName);
-    }
-    
-    public void initConnectionPool(ConnectionPoolFactory connPoolFactory, 
+    public void initConnectionPool(ConnectionPoolFactory connPoolFactory,
             ConnectionFactory connFactory) {
         connPool = connPoolFactory.newConnectionPool(connPoolSize);
         connPool.setConnectionFactory(connFactory);

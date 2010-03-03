@@ -37,7 +37,7 @@ module Roma
         ret['routing.min_version'] = @min_version
         ret
       end
-      
+
       def set_version(nid,ver)
         @version_of_nodes[nid] = ver
         if @min_version == nil || @min_version > ver
@@ -135,7 +135,7 @@ module Roma
           end
         }
         idx = short_idx if short_idx.length > 0
-          
+
         ks = idx.keys
         return nil if ks.length == 0
         vn = ks[rand(ks.length)]
