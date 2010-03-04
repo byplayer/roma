@@ -12,8 +12,9 @@ public class LamportClock implements LogicalClock {
         return raw;
     }
 
-    public void incr() {
+    public LogicalClock incr() {
         raw = (raw + 1) & 0xffffffff;
+        return this;
     }
 
     public int compareTo(LogicalClock c) {

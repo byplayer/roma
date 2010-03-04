@@ -83,7 +83,7 @@ public class NetSpyMemcachedTest {
                 throw e;
             }
             memc.shutdown();
-            Thread.sleep(10);
+            Thread.sleep(100);
         }
     }
 
