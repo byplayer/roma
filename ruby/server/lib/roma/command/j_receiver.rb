@@ -2,7 +2,6 @@ require 'roma/stats'
 require 'roma/command/sys_command_receiver'
 require 'roma/command/bg_command_receiver'
 require 'roma/command/rt_command_receiver'
-require 'roma/command/st_command_receiver'
 require 'roma/command/util_command_receiver'
 require 'roma/command/mh_command_receiver'
 
@@ -45,7 +44,6 @@ module Roma
       include SystemCommandReceiver
       include BackgroundCommandReceiver
       include RoutingCommandReceiver
-      include StorageCommandReceiver
       include UtilCommandReceiver
       include MultiHashCommandReceiver
 
