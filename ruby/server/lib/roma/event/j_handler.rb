@@ -24,13 +24,13 @@ module Roma
         conn_fact = JavaConnFactory.new
         handler_fact = JavaHandlerFactory.new
         @@instance = handler_fact.newHandler addr, port.to_i, connpool_fact, conn_fact
-        @@instance.mk_evlist
       end
 
       def self.start(storages, rttable, stats, log)
         recv_fact = Roma::Command::JavaRecvFactory.new(
           storages, rttable, stats, log)
-        @@instance.run recv_fact
+          @@instance.mk_evlist
+          @@instance.run recv_fact
       end
 
       def self.stop
@@ -50,7 +50,7 @@ module Roma
       end
 
       def mk_evlist
-        Roma::Command::JavaReceiver.public_instance_methods.each{ |m|
+        JavaHandler::receiver_class.public_instance_methods.each{ |m|
           if m.to_s =~ /^(?:ex)?ev_(.+)$/
             addCommandMap $1, m.to_s
           end

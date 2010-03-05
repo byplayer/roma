@@ -12,7 +12,7 @@ end
 
 if defined? JRUBY_VERSION
   require 'roma/storage/j_jh_storage'
-  $st_class = Roma::Storage::JavaHashStorage
+  $st_class = Roma::Storage::JavaHashMapStorage
 else
   require 'roma/storage/rh_storage'
   $st_class = Roma::Storage::RubyHashStorage
