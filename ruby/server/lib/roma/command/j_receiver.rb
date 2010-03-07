@@ -40,7 +40,6 @@ module Roma
     end
 
     class JavaReceiver < Java::jp.co.rakuten.rit.roma.command.Receiver
-
       include SystemCommandReceiver
       include BackgroundCommandReceiver
       include RoutingCommandReceiver
