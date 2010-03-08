@@ -21,6 +21,7 @@ class RubyHashStorageTest < Test::Unit::TestCase
   end
 
   def setup
+    require 'roma/storage/rh_storage'
     @st = Roma::Storage::RubyHashStorage.new
     @st.vn_list = [0]
     @st.opendb

@@ -38,7 +38,7 @@ class JavaHashMapStorageTest < Test::Unit::TestCase
   def teardown
   end
 
-  def test_cmp_clk
+  def _test_cmp_clk
     (0x001E00000..0x002000000).each{|clk|
       assert_equal(0, @st.send(:cmp_clk,clk, clk) )
     }

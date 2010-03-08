@@ -16,6 +16,9 @@ public class BasicStorage extends AbstractStorage {
     private long logicalClockExpireTime = 300;
 
     public BasicStorage() {
+        setStorageNameAndPath("./");
+        setDivisionNumber(10);
+        setOption("");
         setDataStoreFactory(new DataStoreFactory());
         setLogicalClockFactory(new LogicalClockFactory());
         setDataEntryFactory(new DataEntryFactory());
