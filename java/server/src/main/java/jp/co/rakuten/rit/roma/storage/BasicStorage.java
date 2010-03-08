@@ -1,6 +1,19 @@
 package jp.co.rakuten.rit.roma.storage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class BasicStorage extends AbstractStorage {
+    private static final Logger LOG = LoggerFactory
+            .getLogger(BasicStorage.class);
+
+    private double vnodeDumpSleepTime = 0.001;
+
+    private int vnodeDumpSleepCount = 100;
+
+    private double vnodeCleanupSleepTime = 0.01;
+
+    private long logicalClockExpireTime = 300;
 
     public BasicStorage() {
         setDataStoreFactory(new DataStoreFactory());
@@ -8,7 +21,24 @@ public class BasicStorage extends AbstractStorage {
         setDataEntryFactory(new DataEntryFactory());
     }
 
+    public double getVnodeDumpSleepTime() {
+        return vnodeDumpSleepTime;
+    }
+
+    public int getVnodeDumpSleepCount() {
+        return vnodeDumpSleepCount;
+    }
+
+    public double getVnodeCleanupSleepTime() {
+        return vnodeCleanupSleepTime;
+    }
+
+    public long getLogicalClockExpireTime() {
+        return logicalClockExpireTime;
+    }
+
     public void open() throws StorageException {
+        createStoragePath();
         createVirtualNodeIDMap();
         createDataStores();
     }
@@ -18,6 +48,10 @@ public class BasicStorage extends AbstractStorage {
             DataStore ds = getDataStoreFromIndex(i);
             ds.close();
         }
+    }
+
+    public DataEntry set(DataEntry entry) throws StorageException {
+        return execSetCommand(entry);
     }
 
     public DataEntry execSetCommand(DataEntry entry) throws StorageException {

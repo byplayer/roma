@@ -159,7 +159,7 @@ public class TCHashDataStore implements DataStore {
     }
 
     public boolean isFileBaseDataStore() {
-        return false;
+        return true;
     }
 
     @Override

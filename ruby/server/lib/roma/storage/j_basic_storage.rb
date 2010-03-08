@@ -4,6 +4,22 @@ require 'digest/sha1'
 
 module Roma
   module Storage
+    class JavaLClockFactory < Java::jp.co.rakuten.rit.roma.storage.LogicalClockFactory
+      def initialize
+        super
+      end
+
+      def initLogicalClock time
+        JavaLamportClock.new time
+      end
+    end
+
+    class JavaLamportClock < Java::jp.co.rakuten.rit.roma.storage.LamportClock
+      def initialize time
+        super time
+      end
+    end
+
     class JavaDataEntryFactory < Java::jp.co.rakuten.rit.roma.storage.DataEntryFactory
       def initialize
         super
@@ -11,12 +27,6 @@ module Roma
 
       def initDataEntry key, vn, pc, lc, expt, v
         JavaDataEntry.new key, vn, pc, lc, expt, v
-      end
-    end
-
-    class JavaLClockFactory < Java::jp.co.rakuten.rit.roma.storage.LogicalClockFactory
-      def initialize
-        super
       end
     end
 
@@ -37,12 +47,12 @@ module Roma
         getPClock
       end
 
-      def expire
-        getExpire
-      end
-
       def lclock
         getLClock.getRaw
+      end
+
+      def expire
+        getExpire
       end
 
       def value
@@ -77,7 +87,7 @@ module Roma
       end
 
       def storage_path= path
-        setStoragePathName path
+        setStorageNameAndPath path
       end
 
       def storage_path
@@ -128,6 +138,11 @@ module Roma
         ret
       end
 
+      def cmp_clk clk1, clk2
+        compareLogicalClock clk1, clk2
+      end
+      private :cmp_clk
+
       def opendb
         open
       end
@@ -135,11 +150,6 @@ module Roma
       def closedb
         close
       end
-
-      def cmp_clk clk1, clk2
-        compareLogicalClock clk1, clk2
-      end
-      private :cmp_clk
 
       def get_context vn, key, d
         e1 = createDataEntry key, vn, nil, nil, nil, nil
