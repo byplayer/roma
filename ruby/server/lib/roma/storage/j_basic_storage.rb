@@ -55,9 +55,9 @@ module Roma
         getExpire
       end
 
-      def value
-        val = getValue
-        String.from_java_bytes val
+      def val
+        v = getData
+        String.from_java_bytes v
       end
     end
 
@@ -162,70 +162,70 @@ module Roma
         e1 = createDataEntry key, vn, nil, nil, exp, v.to_java_bytes
         e2 = execSetCommand e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
       def rset(vn, key, d, lc, exp, v)
         e1 = createDataEntry key, vn, nil, lc, exp, v.to_java_bytes
         e2 = execRSetCommand e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
       def add(vn, key, d, exp, v)
         e1 = createDataEntry key, vn, nil, nil, exp, v.to_java_bytes
         e2 = execAddCommand e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
       def replace(vn, key, d, exp, v)
         e1 = createDataEntry key, vn, nil, nil, exp, v.to_java_bytes
         e2 = execReplaceCommand e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
       def append(vn, key, d, exp, v)
         e1 = createDataEntry key, vn, nil, nil, exp, v.to_java_bytes
         e2 = execAppendCommand e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
       def prepend(vn, key, d, exp, v)
         e1 = createDataEntry key, vn, nil, nil, exp, v.to_java_bytes
         e2 = execPrependCommand e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
       def get(vn, key, d)
         e1 = createDataEntry key, vn, nil, nil, nil, nil
         e2 = execGetCommand e1
         return nil unless e2
-        e2.value
+        e2.val
       end
 
       def get_raw(vn, key, d)
         e1 = createDataEntry key, vn, nil, nil, nil, nil
         e2 = getDataEntry e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
       def delete(vn, key, d)
         e1 = createDataEntry key, vn, nil, nil, nil, nil
         e2 = execDeleteCommand e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
       def rdelete(vn, key, d, lclock)
         e1 = createDataEntry key, vn, nil, lclock, nil, nil
         e2 = execRDeleteCommand e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
       def out(vn, key, d)
@@ -237,14 +237,14 @@ module Roma
         e1 = createDataEntry key, vn, nil, nil, nil, v.to_java_bytes
         e2 = execIncrCommand e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
       def decr(vn, key, d, v)
         e1 = createDataEntry key, vn, nil, nil, nil, v.to_java_bytes
         e2 = execDecrCommand e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.value]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
       def clean_up(t, unit_test_flg = nil)
@@ -384,10 +384,10 @@ module Roma
               sleep @each_vn_dump_sleep if count % @each_vn_dump_sleep_count == 0
               next
             end
-            if e.value
+            if e.val
               yield [e.getVNodeID, e.getPClock, e.lclock, e.getExpire,
-               e.getKey.length, e.getKey, e.value.length, e.value].pack(
-                 "NNNNNa#{e.getKey.length}Na#{e.value.length}")
+               e.getKey.length, e.getKey, e.val.length, e.val].pack(
+                 "NNNNNa#{e.getKey.length}Na#{e.val.length}")
             else
               yield [e.getVNodeID, e.getPClock, e.lclock, e.getExpire,
                e.getKey.length, e.getKey, 0].pack("NNNNNa#{e.getKey.length}N")
@@ -404,8 +404,8 @@ module Roma
             sleep @each_vn_dump_sleep if count % @each_vn_dump_sleep_count == 0
           else
             yield [e.getVNodeID, e.getPClock, e.lclock, e.getExpire,
-             e.getKey.length, e.getKey, e.value.length, e.value].pack(
-               "NNNNNa#{e.getKey.length}Na#{e.value.length}")
+             e.getKey.length, e.getKey, e.val.length, e.val].pack(
+               "NNNNNa#{e.getKey.length}Na#{e.val.length}")
             sleep @each_vn_dump_sleep
           end
         }

@@ -122,13 +122,13 @@ module Roma
           vn = @rttable.get_vnode_id(d)
           nodes = @rttable.search_nodes_for_write(vn)
           v = dummy_str[rand(5)] + "::" + i.to_s
-          tt1 = DateTime.now
+#          tt1 = DateTime.now
 #          puts "time1: #{(tt1 - tt0).to_f}"
           if nodes.include?(@stats.ap_str)
             res = @storages[@stats.ap_str].set(vn, k, d, 0x7fffffff, v)
 #            puts "set k=#{k}, #{res}, nid=#{nid}"
           end
-          tt2 = DateTime.now
+#          tt2 = DateTime.now
 #          puts "time1: #{(tt2 - tt1).to_f}"
         }
         t2 = DateTime.now

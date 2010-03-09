@@ -33,12 +33,12 @@ module Roma
 
     # routing setting
     RTTABLE_CLASS = Roma::Routing::JavaCBRoutingTable
-    # RTTABLE_CLASS = Roma::Routing::ChurnbasedRoutingTable
+#    RTTABLE_CLASS = Roma::Routing::ChurnbasedRoutingTable
     RTTABLE_PATH = '.'
 
     # storage setting
-#    STORAGE_CLASS = Roma::Storage::JavaHashMapStorage
-    STORAGE_CLASS = Roma::Storage::RubyHashStorage
+    STORAGE_CLASS = Roma::Storage::JavaHashMapStorage
+#    STORAGE_CLASS = Roma::Storage::RubyHashStorage
     STORAGE_DIVNUM = 10
     STORAGE_PATH = '.'
     STORAGE_DUMP_PATH = '/tmp'
