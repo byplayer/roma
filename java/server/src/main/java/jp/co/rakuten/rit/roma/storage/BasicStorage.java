@@ -53,17 +53,8 @@ public class BasicStorage extends AbstractStorage {
         }
     }
 
-    public DataEntry set(DataEntry entry) throws StorageException {
-        return execSetCommand(entry);
-    }
-
     public DataEntry execSetCommand(DataEntry entry) throws StorageException {
         DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
-        if (ds == null) {
-            throw new StorageException(
-                    "Not found a data store specified by vnode: "
-                            + entry.getVNodeID());
-        }
         DataEntry prev = ds.get(entry.getKey());
         LogicalClock lclock;
         if (prev != null) {
@@ -178,8 +169,8 @@ public class BasicStorage extends AbstractStorage {
             return null;
         }
         entry.setLClock(prev.getLClock().incr());
-        byte[] b = appendValues(prev.getValue(), entry.getValue());
-        entry.setValue(b);
+        byte[] b = appendValues(prev.getData(), entry.getData());
+        entry.setData(b);
         DataEntry ret = ds.put(entry.getKey(), entry);
         if (ret != null) {
             return entry;
@@ -207,8 +198,8 @@ public class BasicStorage extends AbstractStorage {
             return null;
         }
         entry.setLClock(prev.getLClock().incr());
-        byte[] b = appendValues(entry.getValue(), prev.getValue());
-        entry.setValue(b);
+        byte[] b = appendValues(entry.getData(), prev.getData());
+        entry.setData(b);
         DataEntry ret = ds.put(entry.getKey(), entry);
         if (ret != null) {
             return entry;
@@ -250,9 +241,9 @@ public class BasicStorage extends AbstractStorage {
             }
             entry.setLClock(prev.getLClock().incr());
             long t = DataEntry.getNow();
-            if (prev.getValue() != null && prev.getValue().length != 0
+            if (prev.getData() != null && prev.getData().length != 0
                     && t <= prev.getExpire()) {
-                entry.setValue(prev.getValue());
+                entry.setData(prev.getData());
             }
             entry.setPClock(t);
         }

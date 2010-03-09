@@ -212,30 +212,6 @@ public class TCHashDataStore implements DataStore {
     public boolean containsValue(Object value) {
         throw new UnsupportedOperationException();
     }
-    
-    public static class TCEntry implements java.util.Map.Entry<String, DataEntry> {
-        private DataEntry entry;
-        
-        public TCEntry(DataEntry entry) {
-            this.entry = entry;
-        }
-        
-        @Override
-        public String getKey() {
-            return entry.getKey();
-        }
-
-        @Override
-        public DataEntry getValue() {
-            return entry;
-        }
-
-        @Override
-        public DataEntry setValue(DataEntry value) {
-            throw new UnsupportedOperationException();
-        }
-        
-    }
 
     @Override
     public Set<java.util.Map.Entry<String, DataEntry>> entrySet() {
@@ -290,11 +266,7 @@ public class TCHashDataStore implements DataStore {
                     @Override
                     public java.util.Map.Entry<String, DataEntry> next() {
                         DataEntry entry = get(new String(key));
-                        if (entry != null) {
-                            return new TCEntry(entry);
-                        } else {
-                            return null;
-                        }
+                        return entry != null ? entry : null;
                     }
 
                     @Override

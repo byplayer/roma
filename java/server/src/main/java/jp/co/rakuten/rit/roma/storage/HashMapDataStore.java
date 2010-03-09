@@ -106,31 +106,6 @@ public class HashMapDataStore implements DataStore {
         throw new UnsupportedOperationException();
     }
 
-    public static class HMEntry implements
-            java.util.Map.Entry<String, DataEntry> {
-        private DataEntry entry;
-
-        public HMEntry(DataEntry entry) {
-            this.entry = entry;
-        }
-
-        @Override
-        public String getKey() {
-            return entry.getKey();
-        }
-
-        @Override
-        public DataEntry getValue() {
-            return entry;
-        }
-
-        @Override
-        public DataEntry setValue(DataEntry value) {
-            throw new UnsupportedOperationException();
-        }
-
-    }
-
     @Override
     public Set<java.util.Map.Entry<String, DataEntry>> entrySet() {
         return new Set<java.util.Map.Entry<String, DataEntry>>() {
@@ -171,25 +146,21 @@ public class HashMapDataStore implements DataStore {
 
                     Iterator<String> iter = hashMap.keySet().iterator();
 
-                    byte[] key;
+                    String key;
 
                     @Override
                     public boolean hasNext() {
                         if (!iter.hasNext()) {
                             return false;
                         }
-                        key = iter.next().getBytes();
+                        key = iter.next();
                         return key != null;
                     }
 
                     @Override
                     public java.util.Map.Entry<String, DataEntry> next() {
-                        DataEntry entry = get(new String(key));
-                        if (entry != null) {
-                            return new HMEntry(entry);
-                        } else {
-                            return null;
-                        }
+                        DataEntry entry = get(key);
+                        return entry != null ? entry : null;
                     }
 
                     @Override
