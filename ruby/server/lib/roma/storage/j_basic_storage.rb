@@ -57,6 +57,7 @@ module Roma
 
       def val
         v = getData
+        return nil unless v
         String.from_java_bytes v
       end
     end
@@ -158,6 +159,13 @@ module Roma
         [e2.vn, e2.pclock, e2.lclock, e2.expire]
       end
 
+      def cas(vn, key, d, exp, v)
+        e1 = createDataEntry key, vn, nil, nil, exp, v.to_java_bytes
+        e2 = execCasCommand e1
+        return nil unless e2
+        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
+      end
+
       def set(vn, key, d, exp, v)
         e1 = createDataEntry key, vn, nil, nil, exp, v.to_java_bytes
         e2 = execSetCommand e1
@@ -218,14 +226,19 @@ module Roma
         e1 = createDataEntry key, vn, nil, nil, nil, nil
         e2 = execDeleteCommand e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
+        return [] unless e2.val
+        if e2.val.length != 0
+          [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
+        else
+          [e2.vn, e2.pclock, e2.lclock, e2.expire, nil]
+        end
       end
 
       def rdelete(vn, key, d, lclock)
         e1 = createDataEntry key, vn, nil, lclock, nil, nil
         e2 = execRDeleteCommand e1
         return nil unless e2
-        [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
+        [e2.vn, e2.pclock, e2.lclock, e2.expire]
       end
 
       def out(vn, key, d)
@@ -245,6 +258,14 @@ module Roma
         e2 = execDecrCommand e1
         return nil unless e2
         [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
+      end
+
+      def true_length
+        len = 0
+        getDataStores.each { |ds|
+          len += ds.size
+        }
+        len
       end
 
       def clean_up(t, unit_test_flg = nil)
@@ -378,7 +399,6 @@ module Roma
         getDivisionNumber.times{ |i|
           tn =  Time.now.to_i
           getDataStoreFromIndex(i).each{ |k, e|
-            vn, last, clk, expt, val = unpack_data(v)
             if e.getVNodeID != target_vn || (e.getExpire != 0 && tn > e.getExpire)
               count += 1              
               sleep @each_vn_dump_sleep if count % @each_vn_dump_sleep_count == 0

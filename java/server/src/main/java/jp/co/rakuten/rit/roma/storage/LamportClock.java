@@ -23,12 +23,20 @@ public class LamportClock implements LogicalClock {
         }
         LamportClock lc = (LamportClock) c;
         long sub = raw - lc.raw;
-        long abs = (sub < 0) ? -sub : sub;
-        if (abs < 0x80000000) {
-            return (int) (raw - lc.raw);
-        } else {
-            return (int) (lc.raw - raw);
+        if (sub == 0) {
+            return 0;
         }
+        long abs = (sub < 0) ? -sub : sub;
+        if ((abs & 0x80000000) == 0) {
+            return (raw - lc.raw > 0) ? 1 : -1;
+        } else {
+            return (lc.raw - raw > 0) ? 1 : -1;
+        }
+//        if (abs < 0x80000000) {
+//            return (int) (raw - lc.raw);
+//        } else {
+//            return (int) (lc.raw - raw);
+//        }
     }
 
     @Override

@@ -183,10 +183,13 @@ public abstract class AbstractStorage {
         }
     }
 
-    public DataStore getDataStoreFromVNodeID(long virtualNodeID) {
+    public DataStore getDataStoreFromVNodeID(long virtualNodeID)
+            throws StorageException {
         Integer i = virtualNodeIDMap.get(virtualNodeID);
-        if (i == null) {
-            return null;
+        if (i == null || (i < 0 || getDivisionNumber() <= i)) {
+            throw new StorageException(
+                    "Not found a data store specified by vnode: "
+                            + virtualNodeID);
         } else {
             return getDataStoreFromIndex(i);
         }

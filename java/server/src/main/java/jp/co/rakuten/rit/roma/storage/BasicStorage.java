@@ -76,11 +76,6 @@ public class BasicStorage extends AbstractStorage {
 
     public DataEntry execRSetCommand(DataEntry entry) throws StorageException {
         DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
-        if (ds == null) {
-            throw new StorageException(
-                    "Not found a data store specified by vnode: "
-                            + entry.getVNodeID());
-        }
         DataEntry prev = ds.get(entry.getKey());
         long t = DataEntry.getNow();
         if (prev != null) {
@@ -90,6 +85,7 @@ public class BasicStorage extends AbstractStorage {
             }
         }
 
+        entry.setPClock(t);
         DataEntry ret = ds.put(entry.getKey(), entry);
         if (ret != null) {
             return entry;
@@ -100,11 +96,6 @@ public class BasicStorage extends AbstractStorage {
 
     public DataEntry execAddCommand(DataEntry entry) throws StorageException {
         DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
-        if (ds == null) {
-            throw new StorageException(
-                    "Not found a data store specified by vnode: "
-                            + entry.getVNodeID());
-        }
         DataEntry prev = ds.get(entry.getKey());
         if (prev != null) {
             long t = DataEntry.getNow();
@@ -126,11 +117,6 @@ public class BasicStorage extends AbstractStorage {
     public DataEntry execReplaceCommand(DataEntry entry)
             throws StorageException {
         DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
-        if (ds == null) {
-            throw new StorageException(
-                    "Not found a data store specified by vnode: "
-                            + entry.getVNodeID());
-        }
         DataEntry prev = ds.get(entry.getKey());
         if (prev == null) {
             return null;
@@ -153,11 +139,6 @@ public class BasicStorage extends AbstractStorage {
 
     public DataEntry execAppendCommand(DataEntry entry) throws StorageException {
         DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
-        if (ds == null) {
-            throw new StorageException(
-                    "Not found a data store specified by vnode: "
-                            + entry.getVNodeID());
-        }
         DataEntry prev = ds.get(entry.getKey());
         if (prev == null) {
             return null;
@@ -182,11 +163,6 @@ public class BasicStorage extends AbstractStorage {
     public DataEntry execPrependCommand(DataEntry entry)
             throws StorageException {
         DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
-        if (ds == null) {
-            throw new StorageException(
-                    "Not found a data store specified by vnode: "
-                            + entry.getVNodeID());
-        }
         DataEntry prev = ds.get(entry.getKey());
         if (prev == null) {
             return null;
@@ -210,11 +186,6 @@ public class BasicStorage extends AbstractStorage {
 
     public DataEntry execGetCommand(DataEntry entry) throws StorageException {
         DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
-        if (ds == null) {
-            throw new StorageException(
-                    "Not found a data store specified by vnode: "
-                            + entry.getVNodeID());
-        }
         DataEntry prev = ds.get(entry.getKey());
         if (prev != null) {
             if (!prev.isExpired()) {
@@ -229,24 +200,21 @@ public class BasicStorage extends AbstractStorage {
 
     public DataEntry execDeleteCommand(DataEntry entry) throws StorageException {
         DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
-        if (ds == null) {
-            throw new StorageException(
-                    "Not found a data store specified by vnode: "
-                            + entry.getVNodeID());
-        }
         DataEntry prev = ds.get(entry.getKey());
         if (prev != null) {
             if (prev.getExpire() == 0) {
+                prev.setData(null);
                 return prev;
             }
             entry.setLClock(prev.getLClock().incr());
-            long t = DataEntry.getNow();
             if (prev.getData() != null && prev.getData().length != 0
-                    && t <= prev.getExpire()) {
+                    && DataEntry.getNow() <= prev.getExpire()) {
                 entry.setData(prev.getData());
+            } else {
+                entry.setData(new byte[0]);
             }
-            entry.setPClock(t);
         }
+        entry.setPClock(DataEntry.getNow());
         DataEntry ret = ds.put(entry.getKey(), entry);
         if (ret != null) {
             return entry;
@@ -258,11 +226,6 @@ public class BasicStorage extends AbstractStorage {
     public DataEntry execRDeleteCommand(DataEntry entry)
             throws StorageException {
         DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
-        if (ds == null) {
-            throw new StorageException(
-                    "Not found a data store specified by vnode: "
-                            + entry.getVNodeID());
-        }
         DataEntry prev = ds.get(entry.getKey());
         long t = DataEntry.getNow();
         if (prev != null) {
@@ -272,6 +235,7 @@ public class BasicStorage extends AbstractStorage {
             }
         }
 
+        entry.setPClock(t);
         DataEntry ret = ds.put(entry.getKey(), entry);
         if (ret != null) {
             return entry;
@@ -282,11 +246,6 @@ public class BasicStorage extends AbstractStorage {
 
     public DataEntry execOutCommand(DataEntry entry) throws StorageException {
         DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
-        if (ds == null) {
-            throw new StorageException(
-                    "Not found a data store specified by vnode: "
-                            + entry.getVNodeID());
-        }
         return ds.remove(entry.getKey());
     }
 
