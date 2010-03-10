@@ -334,7 +334,7 @@ module Roma
       Config::HANDLER_CLASS::con_pool.return_connection(nid,con)
       rcv
     rescue
-      nil      
+      nil
     end
 
     def acquire_vnodes

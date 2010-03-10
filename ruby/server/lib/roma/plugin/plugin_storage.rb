@@ -429,7 +429,7 @@ module Roma
       end
 
       def redundant(nodes, hname, k, d, clk, expt, v)
-        if @stats.size_of_zredundant > 0 && @stats.size_of_zredundant < v.length 
+        if @stats.size_of_zredundant > 0 && @stats.size_of_zredundant < v.length
           return zredundant(nodes, hname, k, d, clk, expt, v)
         end
 

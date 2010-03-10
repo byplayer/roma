@@ -1,9 +1,11 @@
 package jp.co.rakuten.rit.roma.storage;
 
+import java.util.Map.Entry;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataEntry {
+public class DataEntry implements Entry<String, DataEntry> {
     private static final Logger LOG = LoggerFactory.getLogger(DataEntry.class);
 
     private static final int METADATA_SIZE = 4 + 4 + 4 + 4;
@@ -20,8 +22,8 @@ public class DataEntry {
 
     private long expire; // long
 
-    private byte[] value;
-    
+    private byte[] data;
+
     public DataEntry(String key, long vnodeID, long pClock,
             LogicalClock lClock, long expire, byte[] data) {
         this.key = key;
@@ -29,7 +31,7 @@ public class DataEntry {
         this.pClock = pClock;
         this.lClock = lClock;
         this.expire = expire;
-        this.value = data;
+        this.data = data;
     }
 
     public void setKey(String key) {
@@ -88,12 +90,24 @@ public class DataEntry {
         return expire;
     }
 
-    public void setValue(byte[] value) {
-        this.value = value;
+    public void setData(byte[] data) {
+        this.data = data;
     }
 
-    public byte[] getValue() {
-        return value;
+    public byte[] getData() {
+        return data;
+    }
+
+    public DataEntry getValue() {
+        return this;
+    }
+
+    public DataEntry value() {
+        return this;
+    }
+
+    public DataEntry setValue(DataEntry entry) {
+        throw new UnsupportedOperationException();
     }
 
     public static long getNow() {
@@ -108,18 +122,18 @@ public class DataEntry {
                 .append(getPClock()).append(",").append("lClock=").append(
                         getLClock()).append(",").append("expire=").append(
                         getExpire()).append(",").append("value=").append(
-                        new String(getValue())).append("]");
+                        new String(getData())).append("]");
         return sb.toString();
     }
 
     public static byte[] toByteArray(DataEntry entry) {
-        byte[] rawData = new byte[METADATA_SIZE + entry.getValue().length];
+        byte[] rawData = new byte[METADATA_SIZE + entry.getData().length];
         write32bits(rawData, 0, entry.getVNodeID());
         write32bits(rawData, 4, entry.getPClock());
         write32bits(rawData, 8, entry.getLClock().getRaw());
         write32bits(rawData, 12, entry.getExpire());
-        System.arraycopy(entry.getValue(), 0, rawData, METADATA_SIZE, entry
-                .getValue().length);
+        System.arraycopy(entry.getData(), 0, rawData, METADATA_SIZE, entry
+                .getData().length);
         return rawData;
     }
 

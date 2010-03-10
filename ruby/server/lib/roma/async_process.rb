@@ -210,7 +210,7 @@ module Roma
         @log.warn("async redundant failed:#{k}\e#{hname} #{clk} -> #{nid}")
         return false # retry
       end
-      true      
+      true
     end
 
     def asyncev_reqpushv(args)

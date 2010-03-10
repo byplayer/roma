@@ -1,10 +1,11 @@
 package jp.co.rakuten.rit.roma.storage;
 
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 public abstract class AbstractStorage {
     private DataStoreFactory dsFactory = new DataStoreFactory();
@@ -13,6 +14,8 @@ public abstract class AbstractStorage {
 
     private DataEntryFactory deFactory = new DataEntryFactory();
 
+    private String storageName;
+
     private String rootStoragePathName;
 
     private String fileExtensionName;
@@ -20,8 +23,6 @@ public abstract class AbstractStorage {
     private int divisionNumber;
 
     private long[] virtualNodeIDs;
-
-    private long logicalClockExpireTime = 300;
 
     private String option;
 
@@ -65,6 +66,20 @@ public abstract class AbstractStorage {
         // return dataStores[0].getFileExtensionName();
     }
 
+    public void setStorageNameAndPath(String name) {
+        int lastIndex = name.lastIndexOf('/');
+        setStoragePathName(name.substring(0, lastIndex));
+        setStorageName(name.substring(lastIndex + 1, name.length()));
+    }
+
+    public void setStorageName(String name) {
+        storageName = name;
+    }
+
+    public String getStorageName() {
+        return storageName;
+    }
+
     public void setStoragePathName(String name) {
         rootStoragePathName = name;
         // for (int i = 0; i < dataStores.length; ++i) {
@@ -75,6 +90,17 @@ public abstract class AbstractStorage {
     public String getStoragePathName() {
         return rootStoragePathName;
         // return dataStores[0].getStoragePathName();
+    }
+
+    public void createStoragePath() {
+        File storagePathDir = new File(getStoragePathName());
+        if (!storagePathDir.exists()) {
+            storagePathDir.mkdir();
+        }
+        File storageDir = new File(storagePathDir, getStorageName());
+        if (!storageDir.exists()) {
+            storageDir.mkdir();
+        }
     }
 
     public DataStore[] getDataStores() {
@@ -121,24 +147,36 @@ public abstract class AbstractStorage {
 
     public void createVirtualNodeIDMap() {
         virtualNodeIDMap = new HashMap<Long, Integer>();
-        Random random;
+        MessageDigest md = null;
         try {
-            random = SecureRandom.getInstance("SHA1");
+            md = MessageDigest.getInstance("SHA1");
         } catch (NoSuchAlgorithmException e) {
-            random = new Random();
+            // ignore
         }
-        for (long vnID : virtualNodeIDs) {
-            random.setSeed(vnID);
-            int index = random.nextInt(divisionNumber);
-            virtualNodeIDMap.put(vnID, index);
+        for (long vnodeID : virtualNodeIDs) {
+            String vn = "" + vnodeID;
+            ByteBuffer digest = ByteBuffer.wrap(md.digest(vn.getBytes()));
+            digest.position(12);
+            byte[] b = new byte[8];
+            for (int i = 0; i < b.length; ++i) {
+                b[i] = digest.get(i + 12);
+            }
+            long l = digest.getLong() << 32 >>> 32;
+            int i = (int) (l % getDivisionNumber());
+            virtualNodeIDMap.put(vnodeID, i);
         }
     }
 
     public void createDataStores() throws StorageException {
         dataStores = new DataStore[getDivisionNumber()];
+        StringBuilder sb = new StringBuilder();
+        sb.append(getStoragePathName());
+        sb.append("/");
+        sb.append(getStorageName());
+        sb.append("/");
+        String path = sb.toString();
         for (int i = 0; i < dataStores.length; ++i) {
-            String fileName = getStoragePathName() + "/" + i + "."
-                    + getFileExtensionName();
+            String fileName = path + i + "." + getFileExtensionName();
             dataStores[i] = dsFactory.newDataStore(fileName,
                     getFileExtensionName(), getOption(), deFactory, lcFactory);
             dataStores[i].open();
@@ -178,10 +216,6 @@ public abstract class AbstractStorage {
         LogicalClock lc1obj = lcFactory.newLogicalClock(lc1);
         LogicalClock lc2obj = lcFactory.newLogicalClock(lc2);
         return lc1obj.compareTo(lc2obj);
-    }
-
-    public long getLogicalClockExpireTime() {
-        return logicalClockExpireTime;
     }
 
     public DataEntry getDataEntry(DataEntry entry) throws StorageException {

@@ -63,14 +63,14 @@ module Roma
         raise 'Unsupported version error' if ver != 1
 
         rd = RoutingData.new(dgst_bits, div_bits, rn)
-        
+
         bin = bin[9..-1]
         nodeslen.times{|i|
           len, = bin.unpack('n')
           bin = bin[2..-1]
           nid, = bin.unpack("a#{len}")
           bin = bin[len..-1]
-          rd.nodes << nid 
+          rd.nodes << nid
         }
         (2**div_bits).times{|i|
           vn=i<<(dgst_bits-div_bits)

@@ -24,7 +24,7 @@ module Roma
       end
     end # class JavaHashMapDataStore
 
-    class JavaHashStorage < Roma::Storage::JavaBasicStorage
+    class JavaHashMapStorage < Roma::Storage::JavaBasicStorage
       def initialize
         super
         setDataStoreFactory JavaDataStoreFactory.new

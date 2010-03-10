@@ -61,8 +61,8 @@ public class StorageCommands {
         }
     }
 
-    public static List<DataEntry> forwardGets(Receiver receiver, String[] commands)
-            throws Exception {
+    public static List<DataEntry> forwardGets(Receiver receiver,
+            String[] commands) throws Exception {
         // TODO
         return null;
     }
@@ -115,10 +115,10 @@ public class StorageCommands {
                         sb.append("VALUE ");
                         sb.append(key);
                         sb.append(" 0 ");
-                        sb.append(e.getValue().length);
+                        sb.append(e.getData().length);
                         sb.append(CRLF);
                         receiver.writeStringNotFlush(sb.toString());
-                        receiver.writeBytesNotFlush(e.getValue());
+                        receiver.writeBytesNotFlush(e.getData());
                         receiver.writeStringNotFlush(CRLF);
                     }
                     receiver.writeString("END" + CRLF);
@@ -139,7 +139,7 @@ public class StorageCommands {
             DataEntry e2 = storage.execGetCommand(e1);
             // TODO read count up
             if (e2 != null) {
-                byte[] value = e2.getValue();
+                byte[] value = e2.getData();
                 StringBuilder sb = new StringBuilder();
                 sb.append("VALUE ");
                 sb.append(key);
@@ -230,7 +230,7 @@ public class StorageCommands {
                     continue;
                 }
 
-                byte[] value = e.getValue();
+                byte[] value = e.getData();
                 StringBuilder sb = new StringBuilder();
                 sb.append("VALUE ");
                 sb.append(e.getKey());

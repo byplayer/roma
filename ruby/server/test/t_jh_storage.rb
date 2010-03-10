@@ -10,9 +10,18 @@ rescue => e
   $LOAD_PATH.unshift("#{base_path}/server/lib")
 end
 
+if defined? JRUBY_VERSION
+  require 'java'
+  require 'jar/ROMA-java-server-0.1.0-jar-with-dependencies.jar'
+  require 'roma/storage/j_jh_storage'
+  $st_class = Roma::Storage::JavaHashMapStorage
+else
+  require 'roma/storage/rh_storage'
+  $st_class = Roma::Storage::RubyHashStorage
+end
 require 'test/roma-test-storage-utils'
 
-class RubyHashStorageTest < Test::Unit::TestCase
+class JavaHashMapStorageTest < Test::Unit::TestCase
   include BasicStorageTestUtil
 
   def initialize(arg)
@@ -21,8 +30,7 @@ class RubyHashStorageTest < Test::Unit::TestCase
   end
 
   def setup
-    require 'roma/storage/rh_storage'
-    @st = Roma::Storage::RubyHashStorage.new
+    @st = $st_class.new
     @st.vn_list = [0]
     @st.opendb
   end
@@ -30,7 +38,7 @@ class RubyHashStorageTest < Test::Unit::TestCase
   def teardown
   end
 
-  def test_cmp_clk
+  def _test_cmp_clk
     (0x001E00000..0x002000000).each{|clk|
       assert_equal(0, @st.send(:cmp_clk,clk, clk) )
     }

@@ -99,7 +99,7 @@ class RoutingDataTest < Test::Unit::TestCase
 
   def test_dump_binary
     rd=Roma::Routing::RoutingData.create(32,9,2,['roma0_3300','roma1_3300'])
-    # set to a bummy clock 
+    # set to a bummy clock
     (2**rd.div_bits).times{|i|
       vn=i<<(rd.dgst_bits-rd.div_bits)
       rd.v_clk[vn] = i
@@ -142,7 +142,7 @@ class RoutingDataTest < Test::Unit::TestCase
 
   def test_dump_binary2
     rd=Roma::Routing::RoutingData.create(32,9,2,['roma0_3300','roma1_3300'])
-    # set to a bummy clock 
+    # set to a bummy clock
     (2**rd.div_bits).times{|i|
       vn=i<<(rd.dgst_bits-rd.div_bits)
       rd.v_clk[vn] = i

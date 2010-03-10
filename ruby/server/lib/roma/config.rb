@@ -1,11 +1,11 @@
 require 'roma/storage/rh_storage'
-require 'roma/event/handler'
-require 'roma/event/rsok_handler'
+#require 'roma/event/handler'
+#require 'roma/event/rsok_handler'
 require 'roma/routing/cb_rttable'
 
 if defined? JRUBY_VERSION
-  require 'roma/storage/j_tc_storage'
-  #require 'roma/storage/j_jh_storage'
+  #require 'roma/storage/j_tc_storage'
+  require 'roma/storage/j_jh_storage'
   require 'roma/event/j_handler'
   require 'roma/routing/j_cb_rttable'
 end
@@ -33,12 +33,12 @@ module Roma
 
     # routing setting
     RTTABLE_CLASS = Roma::Routing::JavaCBRoutingTable
-    # RTTABLE_CLASS = Roma::Routing::ChurnbasedRoutingTable
+#    RTTABLE_CLASS = Roma::Routing::ChurnbasedRoutingTable
     RTTABLE_PATH = '.'
 
     # storage setting
-    STORAGE_CLASS = Roma::Storage::JavaTCHashStorage
-    # STORAGE_CLASS = Roma::Storage::RubyHashStorage
+    STORAGE_CLASS = Roma::Storage::JavaHashMapStorage
+#    STORAGE_CLASS = Roma::Storage::RubyHashStorage
     STORAGE_DIVNUM = 10
     STORAGE_PATH = '.'
     STORAGE_DUMP_PATH = '/tmp'

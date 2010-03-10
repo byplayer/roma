@@ -90,9 +90,9 @@ public abstract class HandlerBase {
     }
 
     private void initJavaCommands() {
-        addJavaCommandMap(StorageCommands.GetCommand.class);
-        addJavaCommandMap(StorageCommands.GetsCommand.class);
-        addJavaCommandMap(SystemCommands.QuitCommand.class);
+        //addJavaCommandMap(StorageCommands.GetCommand.class);
+        //addJavaCommandMap(StorageCommands.GetsCommand.class);
+        //addJavaCommandMap(SystemCommands.QuitCommand.class);
     }
 
     public void start() throws IOException {
