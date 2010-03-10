@@ -187,7 +187,7 @@ module Roma
         res = @storages[hname].delete(vn, key, d)
         @stats.delete_count += 1
         return send_data("NOT_DELETED\r\n") unless res
-        return send_data("NOT_FOUND\r\n") if res == :deletemark
+        return send_data("NOT_FOUND\r\n") if res.length == 0
 
         nodes[1..-1].each{ |nid|
           res2 = send_cmd(nid,"rdelete #{s[1]} #{res[2]}\r\n")
@@ -218,7 +218,7 @@ module Roma
         res = @storages[hname].delete(vn, key, d)
         @stats.delete_count += 1
         return send_data("NOT_DELETED\r\n") unless res
-        return send_data("NOT_FOUND\r\n") if res == :deletemark
+        return send_data("NOT_FOUND\r\n") if res.length == 0
 
         nodes.delete(@nid)
         nodes.each{ |nid|

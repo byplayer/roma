@@ -271,7 +271,7 @@ module Roma
         clk = 0
         if buf
           vn, t, clk, expt, v2 = unpack_data(buf)
-          return :deletemark if expt == 0
+          return [] if expt == 0
           clk = (clk + 1) & 0xffffffff
           v = v2 if v2 && v2.length != 0 && Time.now.to_i <= expt  
         end
