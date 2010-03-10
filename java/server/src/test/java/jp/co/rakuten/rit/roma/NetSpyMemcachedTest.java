@@ -22,11 +22,11 @@ public class NetSpyMemcachedTest {
                             ConnectionFactory cf = cfb.build();
 
                             List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-                            addresses.add(new InetSocketAddress("10.160.56.171", 11211));
+                            addresses.add(new InetSocketAddress("localhost", 11211));
                             MemcachedClient memc = new MemcachedClient(cf,
                                     addresses);
-                            small_loop0(memc);
-//                            small_loop(memc);
+//                            small_loop0(memc);
+                            small_loop(memc);
                             memc.shutdown();
                         } else {
                             small_loop(c);
@@ -57,7 +57,7 @@ public class NetSpyMemcachedTest {
 
     private void small_loop0(MemcachedClient c) throws Exception {
         String s = Thread.currentThread().toString();
-        int count = 10000;
+        int count = 1000;
         
         for (int i = 0; i < count; ++i) {
             if (i % 1000 == 0) {
@@ -68,7 +68,7 @@ public class NetSpyMemcachedTest {
             ConnectionFactory cf = cfb.build();
 
             List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-            addresses.add(new InetSocketAddress("10.160.56.171", 11211));
+            addresses.add(new InetSocketAddress("localhost", 11211));
             MemcachedClient memc = new MemcachedClient(cf,
                     addresses);
             String k = s;
@@ -89,7 +89,7 @@ public class NetSpyMemcachedTest {
 
     private void small_loop(MemcachedClient c) throws Exception {
         String s = Thread.currentThread().toString();
-        int count = 10000;
+        int count = 1000;
 
         long time1 = System.currentTimeMillis();
         for (int i = 0; i < count; ++i) {
@@ -105,8 +105,8 @@ public class NetSpyMemcachedTest {
                 System.out.println("reason: " + e.getMessage());
                 throw e;
             }
-            // System.out.println("set: k: " + k + ", v: " + v);
-            // Thread.sleep(1);
+//             System.out.println("set: k: " + k + ", v: " + v);
+//             Thread.sleep(1);
         }
         time1 = System.currentTimeMillis() - time1;
         double t1 = ((double) (count / (double) time1)) * 1000;
@@ -150,7 +150,7 @@ public class NetSpyMemcachedTest {
             ConnectionFactory cf = cfb.build();
 
             List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-            addresses.add(new InetSocketAddress("10.168.56.171", 11211));
+            addresses.add(new InetSocketAddress("localhost", 11211));
             memc = new MemcachedClient(cf, addresses);
 
             // t.big_loop(1, memc);
