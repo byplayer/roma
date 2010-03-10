@@ -247,14 +247,14 @@ module Roma
       end
 
       def incr(vn, key, d, v)
-        e1 = createDataEntry key, vn, nil, nil, nil, v.to_java_bytes
+        e1 = createDataEntry key, vn, nil, nil, nil, v.to_s.to_java_bytes
         e2 = execIncrCommand e1
         return nil unless e2
         [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
       def decr(vn, key, d, v)
-        e1 = createDataEntry key, vn, nil, nil, nil, v.to_java_bytes
+        e1 = createDataEntry key, vn, nil, nil, nil, v.to_s.to_java_bytes
         e2 = execDecrCommand e1
         return nil unless e2
         [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]

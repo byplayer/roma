@@ -1,5 +1,7 @@
 package jp.co.rakuten.rit.roma.storage;
 
+import java.math.BigInteger;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -249,14 +251,69 @@ public class BasicStorage extends AbstractStorage {
         return ds.remove(entry.getKey());
     }
 
+    private static BigInteger MASK_INTEGER = (new BigInteger("2").pow(64))
+            .subtract(new BigInteger("1"));
+
     public DataEntry execIncrCommand(DataEntry entry) throws StorageException {
-        // TODO
-        throw new UnsupportedOperationException();
+        DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
+        DataEntry prev = ds.get(entry.getKey());
+        if (prev == null) {
+            return null;
+        }
+
+        // if buf is not null
+        long t = DataEntry.getNow();
+        if (t > prev.getExpire()) {
+            return null;
+        }
+        entry.setLClock(prev.getLClock().incr());
+        entry.setPClock(t);
+        entry.setExpire(prev.getExpire());
+        BigInteger v2 = new BigInteger(new String(prev.getData()));
+        BigInteger v = new BigInteger(new String(entry.getData()));
+        v = v2.add(v);
+        if (v.signum() == -1) {
+            v = BigInteger.ZERO;
+        }
+        v = v.and(MASK_INTEGER);
+        entry.setData(v.toString().getBytes());
+        DataEntry ret = ds.put(entry.getKey(), entry);
+        if (ret != null) {
+            return entry;
+        } else {
+            return null;
+        }
     }
 
     public DataEntry execDecrCommand(DataEntry entry) throws StorageException {
-        // TODO
-        throw new UnsupportedOperationException();
+        DataStore ds = getDataStoreFromVNodeID(entry.getVNodeID());
+        DataEntry prev = ds.get(entry.getKey());
+        if (prev == null) {
+            return null;
+        }
+
+        // if buf is not null
+        long t = DataEntry.getNow();
+        if (t > prev.getExpire()) {
+            return null;
+        }
+        entry.setLClock(prev.getLClock().incr());
+        entry.setPClock(t);
+        entry.setExpire(prev.getExpire());
+        BigInteger v2 = new BigInteger(new String(prev.getData()));
+        BigInteger v = new BigInteger(new String(entry.getData()));
+        v = v2.subtract(v);
+        if (v.signum() == -1) {
+            v = BigInteger.ZERO;
+        }
+        v = v.and(MASK_INTEGER);
+        entry.setData(v.toString().getBytes());
+        DataEntry ret = ds.put(entry.getKey(), entry);
+        if (ret != null) {
+            return entry;
+        } else {
+            return null;
+        }
     }
 
     // public DataEntry add(DataEntry entry) throws StorageException {
