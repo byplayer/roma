@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 module BasicStorageTestUtil
@@ -21,7 +20,8 @@ module BasicStorageTestUtil
     @st.set(0,'abc',0,0xffffffff,'abc_data')
     assert_equal( 'abc_data', @st.delete(0,'abc',0)[4]) # 存在するキーの削除は value が返る
     assert_nil( @st.get(0,'abc',0) )
-    assert_equal(:deletemark, @st.delete(0,'abc',0)) # 削除済みはマークがあることを返す
+    res = @st.delete(0,'abc',0)
+    assert_equal(0, res.length) # 削除済みは空配列を返す
   end
 
   # 有効期限
