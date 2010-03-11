@@ -12,7 +12,7 @@ end
 
 require 'test/roma-test-storage-utils'
 
-class RubyHashStorageTest < Test::Unit::TestCase
+class RubyHashStorageTest2 < Test::Unit::TestCase
   include BasicStorageTestUtil
 
   def initialize(arg)
