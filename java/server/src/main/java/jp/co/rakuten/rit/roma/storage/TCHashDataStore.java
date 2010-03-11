@@ -29,12 +29,12 @@ public class TCHashDataStore implements DataStore {
     private HDB tchdb;
 
     public TCHashDataStore(final String storagePathName,
-            final String fileExtensionName, final String option,
+            final String fileExtensionName, final String options,
             final DataEntryFactory deFactory,
             final LogicalClockFactory lcFactory) {
         this.storagePathName = storagePathName;
         this.fileExtensionName = fileExtensionName;
-        this.option = option;
+        this.option = options;
         this.deFactory = deFactory;
         this.lcFactory = lcFactory;
     }
@@ -73,7 +73,8 @@ public class TCHashDataStore implements DataStore {
         if (!tchdb.open(getStoragePathName(), HDB.OWRITER | HDB.OCREAT
                 | HDB.ONOLCK)) {
             int ecode = tchdb.ecode();
-            StorageException e = new StorageException("open error: " + HDB.errmsg(ecode));
+            StorageException e = new StorageException("open error: "
+                    + HDB.errmsg(ecode));
             LOG.error("open error", e);
         }
     }
@@ -251,7 +252,7 @@ public class TCHashDataStore implements DataStore {
             public Iterator<java.util.Map.Entry<String, DataEntry>> iterator() {
                 return new Iterator<java.util.Map.Entry<String, DataEntry>>() {
                     boolean iteratable = tchdb.iterinit();
-                    
+
                     byte[] key;
 
                     @Override

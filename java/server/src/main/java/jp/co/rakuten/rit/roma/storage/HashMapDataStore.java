@@ -32,7 +32,7 @@ public class HashMapDataStore implements DataStore {
             final LogicalClockFactory lcFactory) {
         this.storagePathName = storagePathName;
         this.fileExtensionName = fileExtensionName;
-        this.option = option;
+        this.option = options;
         this.deFactory = deFactory;
         this.lcFactory = lcFactory;
     }
