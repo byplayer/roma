@@ -192,31 +192,6 @@ module BasicStorageTestUtil
     n.times{|i|
       assert_equal('abc_data',  @st.delete(0,i.to_s,0)[4])
     }
-    # 削除記録も含めた本当のレコード数
-    assert_equal(n, @st.true_length )
-  end
-
-  def test_clean_up
-    @st.each_clean_up_sleep = 0
-    n=@ndat
-    n.times{|i|
-      @st.set(0,i.to_s,0,0xffffffff,'abc_data')
-    }
-    # 指定時刻より以前 and 有効期限切れを削除
-    # 全てのデータは現在よりも以前だが、有効期限内なので０件
-    assert_equal(0, @st.clean_up(Time.now.to_i+100) )
-    # 10件を削除（削除は有効期限を０する）
-    10.times{|i|
-      assert_equal('abc_data', @st.delete(0,i.to_s,0)[4])
-    }
-    assert_nil( @st.get(0,'0',0) )
-    assert_equal('abc_data', @st.get(0,'19',0) )
-    # 削除時刻よりも以前を指定すると、０件
-    assert_equal(0, @st.clean_up(Time.now.to_i-100) )
-    # 削除時刻よりも進ませると、10件
-    assert_equal(10, @st.clean_up(Time.now.to_i+100) )
-    # 残は n-10
-    assert_equal(n-10, Marshal.load(@st.dump(0)).length )
   end
 
   def test_each_clean_up
@@ -348,44 +323,6 @@ module BasicStorageTestUtil
     assert_equal(100, cnt)
   end
 
-  def test_dump_and_load
-    n=10
-    n.times{|i|
-      @st.set(0,i.to_s,0,0xffffffff,'abc_data')
-
-    }
-    assert_equal(0, @st.load(@st.dump(0)) ) # 同じ論理クロックはコピー件数 0 件
-
-    # 進んだ論理クロックのデータを n 件作成
-    h={}
-    n.times{|i|
-      h[i.to_s]=[0,Time.now.to_i,1,0xffffffff].pack('NNNN')+'new data'  
-    }
-    dmp=Marshal.dump(h)
-
-    assert_equal(n, @st.load(dmp) ) # 進んだ論理クロックの n 件のみコピーされる
-    assert_equal('new data',  @st.get(0,'0',0))
-  end
-
-  def test_dump_and_load2
-    n=10
-    n.times{|i|
-      assert_nil( @st.delete(0,i.to_s,0)[4] ) # データが存在しなくても削除記録を残す
-    }
-    dmp=@st.dump(0)
-    assert_equal(n, Marshal.load(dmp).length ) # 削除記録もダンプされる
-    assert_equal(0, @st.load(@st.dump(0)) ) # 同じデータの場合はコピー件数 0 件
-
-    # 遅れた論理クロックのデータを作成
-    h={}
-    n.times{|i|
-      h[i.to_s]=[0,Time.now.to_i,0xffffffff,0xffffffff].pack('NNNN')+'old data'
-    }
-    dmp=Marshal.dump(h)
-    assert_equal(0, @st.load(dmp) ) # 進んだ論理クロックの削除記録があるのでデータは上書きされない
-    assert_nil( @st.get(0,'0',0) )
-  end
-
   # closedb 後のアクセスは NoMethodError が発生することを確認する
   def test_close
     @st.closedb
@@ -398,43 +335,6 @@ module BasicStorageTestUtil
       @st.set(0,'abc',0,0xffffffff,'abc_data')
     end
     
-    assert_raise NoMethodError do
-      @st.dump(0)
-    end
-
-    h={}
-    100.times{|i|
-      h[i.to_s]=[0,Time.now.to_i,0xffffffff,0xffffffff].pack('NNNN')+'old data'
-    }
-    dmp=Marshal.dump(h)
-
-    assert_raise NoMethodError do
-      @st.load(dmp)
-    end
-
-    # この場合は 0 件
-    assert_equal(0,@st.clean_up(Time.now.to_i+100) )
-
-    # clean_up 中に closedb をするテスト
-    #
-    # わざわざユニットテストを行う理由 => レアケースなだけにバグも発見しにくい。
-    #
-    # バッチによる clean_up 処理中に deletehash を行ったときこの状態になる。
-    # NoMethodError を判定した retry を保証するためテストを行う。
-    # 
-    @st.opendb
-    h={}
-    10.times{|i|
-      h[i.to_s]=[0,Time.now.to_i,0,Time.now.to_i].pack('NNNN')+'old data'
-    }
-    dmp=Marshal.dump(h)
-    @st.load(dmp)
-
-    # clean_up 中に closedb されると NoMethodError が発生する
-    assert_raise NoMethodError do
-      @st.clean_up(Time.now.to_i-10,true)
-    end
-
     # 次のテストのために再度 open
     @st.opendb
   end
