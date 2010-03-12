@@ -77,6 +77,7 @@ module Roma
         @each_vn_dump_sleep = 0.001
         @each_vn_dump_sleep_count = 100
         @each_clean_up_sleep = 0.01
+        @logic_clock_expire = 300
       end
 
       def ext_name= name
@@ -260,62 +261,33 @@ module Roma
         [e2.vn, e2.pclock, e2.lclock, e2.expire, e2.val]
       end
 
-      def true_length
-        len = 0
-        getDataStores.each { |ds|
-          len += ds.size
-        }
-        len
-      end
-
-      def clean_up(t, unit_test_flg = nil)
-        n = 0
-        nt = Time.now.to_i
-        getDataStores.each { |ds|
-          delkey = []
-          ds.each{ |k, e|
-            if nt > e.expire && t > e.pclock
-              n += 1
-              #delkey << k
-              ds.out e.getKey
-            end
-            if unit_test_flg
-              closedb
-            end
-            sleep @each_clean_up_sleep
-          }
-          #delkey.each{ |k| @hdb[i].out(k) }
-        }
-        n
-      rescue => e
-        raise NoMethodError(e.message)
-      end
-
       def each_clean_up(t, vnhash)
         @do_clean_up = true
         nt = Time.now.to_i
         getDataStores.each { |ds|
           deletelist = []
-          # TODO separate the deleting code only from the following iteration
           ds.each{ |k, e|
             return unless @do_clean_up
             vn_stat = vnhash[e.vn]
-            if vn_stat == :primary && ((e.expire != 0 && nt > e.expire) || (e.expire == 0 && t > e.getpclock))
+            if vn_stat == :primary && ((e.expire != 0 && nt > e.expire) || (e.expire == 0 && t > e.pclock))
               yield k, e.vn
               r = String.from_java_bytes(JavaDataEntry.toByteArray(ds.get(k)))
               l = String.from_java_bytes(JavaDataEntry.toByteArray(e))
               if r == l
-                ds.out(k)
+                deletelist << k
               end 
             elsif vn_stat == nil && t > e.pclock
               yield k, e.vn
               r = String.from_java_bytes(JavaDataEntry.toByteArray(ds.get(k)))
               l = String.from_java_bytes(JavaDataEntry.toByteArray(e))
               if r == l
-                ds.out(k)
+                deletelist << k
               end
             end
             sleep @each_clean_up_sleep
+          }
+          deletelist.each { |k|
+            ds.out k
           }
         }
       end
@@ -324,57 +296,36 @@ module Roma
          @do_clean_up = false
       end
 
-      def load(dmp)
-        n = 0
-        h = Marshal.load(dmp)
-        h.each_pair{ |k, v|
-          # remort data
-          r_vn, r_last, r_clk, r_expt = unpack_header(v)
-          raise "An invalid vnode number is include.key=#{k} vn=#{r_vn}" unless @hdiv.key?(r_vn)
-          local = @hdb[@hdiv[r_vn]].get(k)
-          if local == nil
-            n += 1
-            @hdb[@hdiv[r_vn]].put(k, v)
-          else
-            # local data
-            l_vn, l_last, l_clk, l_expt = unpack_data(local)
-            if r_last - l_last < @logic_clock_expire && cmp_clk(r_clk,l_clk) <= 0
-            else # remort is newer.
-              n += 1
-              @hdb[@hdiv[r_vn]].put(k, v)
-            end
-          end
-          sleep @each_vn_dump_sleep
-        }
-        n
-      end
-
-      def load_stream_dump(vn, last, clk, expt, k, v)
-        buf = @hdb[@hdiv[vn]].get(k)
-        if buf
-          data = unpack_header(buf)
-          if last - data[1] < @logic_clock_expire && cmp_clk(clk,data[2]) <= 0
+      def load_stream_dump(vn, last, clk, expt, key, v)
+        e1 = createDataEntry key, vn, nil, nil, nil, nil
+        e2 = execGetCommand e1
+        if e2
+          if last - e2.pclock < @logic_clock_expire && cmp_clk(clk, e2.lclock) <= 0
             return nil
           end
         end
 
-        ret = [vn, last, clk, expt, v]
+        e3 = createDataEntry key, vn, last, clk, expt, v
         if expt == 0
-          return ret if @hdb[@hdiv[vn]].put(k, pack_header(*ret[0..3]))
+          if execSetCommand e3
+            return [vn, last, clk, expt, v]
+          end
         else
-          return ret if @hdb[@hdiv[vn]].put(k, pack_data(*ret))
+          if execSetCommand e3
+            return [vn, last, clk, expt, v]
+          end
         end
         nil
       end
 
-      # Returns the vnode dump.
+      # Return the vnode dump.
       def dump vn
         buf = get_vnode_hash vn
         return nil if buf.length == 0
-        Marshal.dump(buf) # TODO
+        Marshal.dump(buf)
       end
 
-      def dump_file(path, except_vnh = nil)
+      def dump_file path, except_vnh = nil
         pbuf = ''
         path.split('/').each{ |p|
           pbuf << p
@@ -385,8 +336,10 @@ module Roma
           pbuf << '/'
         }
         getDivisionNumber.times { |i|
-          f = open("#{path}/#{i}.dump","wb")
-          each_hdb_dump(i, except_vnh){ |data| f.write(data) }
+          f = open "#{path}/#{i}.dump", "wb"
+          each_hdb_dump(i, except_vnh){ |data|
+            f.write(data)
+          }
           f.close
         }
         open("#{path}/eod","w"){ |f|
@@ -397,20 +350,20 @@ module Roma
       def each_vn_dump target_vn
         count = 0
         getDivisionNumber.times{ |i|
-          tn =  Time.now.to_i
+          tn = Time.now.to_i
           getDataStoreFromIndex(i).each{ |k, e|
             if e.getVNodeID != target_vn || (e.getExpire != 0 && tn > e.getExpire)
-              count += 1              
+              count += 1
               sleep @each_vn_dump_sleep if count % @each_vn_dump_sleep_count == 0
               next
             end
             if e.val
-              yield [e.getVNodeID, e.getPClock, e.lclock, e.getExpire,
-               e.getKey.length, e.getKey, e.val.length, e.val].pack(
-                 "NNNNNa#{e.getKey.length}Na#{e.val.length}")
+              yield [e.vn, e.pclock, e.lclock, e.expire,
+               e.key.length, e.key, e.val.length, e.val].pack(
+                 "NNNNNa#{e.key.length}Na#{e.val.length}")
             else
-              yield [e.getVNodeID, e.getPClock, e.lclock, e.getExpire,
-               e.getKey.length, e.getKey, 0].pack("NNNNNa#{e.getKey.length}N")
+              yield [e.vn, e.pclock, e.lclock, e.expire,
+               e.key.length, e.key, 0].pack("NNNNNa#{e.getKey.length}N")
             end
           }
         }
@@ -423,8 +376,8 @@ module Roma
             count += 1
             sleep @each_vn_dump_sleep if count % @each_vn_dump_sleep_count == 0
           else
-            yield [e.getVNodeID, e.getPClock, e.lclock, e.getExpire,
-             e.getKey.length, e.getKey, e.val.length, e.val].pack(
+            yield [e.vn, e.pclock, e.lclock, e.expire,
+             e.key.length, e.key, e.val.length, e.val].pack(
                "NNNNNa#{e.getKey.length}Na#{e.val.length}")
             sleep @each_vn_dump_sleep
           end

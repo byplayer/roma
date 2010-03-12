@@ -21,8 +21,7 @@ module Roma
       attr_accessor :timeout
       attr_reader :lastcmd
 
-      @@ev_list = Command::Receiver.mk_evlist
-
+      @@ev_list = nil
       @@addr = nil
       @@port = nil
 
@@ -32,6 +31,7 @@ module Roma
         @log = Roma::Logging::RLogger.instance
 
         @receiver = Roma::Command::Receiver.new(self, storages, rttable)
+        @@ev_list = Command::Receiver.mk_evlist
       end
 
       def self.init(addr, port)

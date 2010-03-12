@@ -5,13 +5,13 @@ module Roma
 
     class BasicStorage
 
-      attr :hdb
+      attr_accessor :hdb # TODO writer
       attr :hdiv
       attr :ext_name
       
       attr_reader :error_message
 
-      attr_writer :vn_list
+      attr_accessor :vn_list # TODO writer
       attr_writer :storage_path
       attr_writer :divnum
       attr_writer :option
@@ -111,7 +111,6 @@ module Roma
       end
 
       def pack_data(vn, physical_clock, logical_clock, expire, value)
-#        value = String.from_java_bytes(value)
         [vn, physical_clock, logical_clock, expire, value].pack(PACK_TEMPLATE)
       end
 
@@ -328,44 +327,6 @@ module Roma
         nil
       end
 
-      def true_length
-        res = 0
-        @hdb.each{ |hdb| res += hdb.rnum }
-        res
-      end
-
-      def add_vnode(vn)
-      end
-
-      def del_vnode(vn)
-        buf = get_vnode_hash(vn)
-        buf.each_key{ |k| @hdb[@hdiv[vn]].out(k) }
-      end
-
-      def clean_up(t,unit_test_flg=nil)
-        n = 0
-        nt = Time.now.to_i
-        @hdb.each_index{ |i|
-          delkey = []
-          @hdb[i].each{ |k, v|
-            vn, last, clk, expt = unpack_header(v)
-            if nt > expt && t > last
-              n += 1
-              #delkey << k
-              @hdb[i].out(k)
-            end
-            if unit_test_flg
-              closedb
-            end
-            sleep @each_clean_up_sleep
-          }
-          #delkey.each{ |k| @hdb[i].out(k) }
-        }
-        n
-      rescue => e
-        raise NoMethodError(e.message)
-      end
-
       def each_clean_up(t, vnhash)
         @do_clean_up = true
         nt = Time.now.to_i
@@ -388,31 +349,6 @@ module Roma
 
       def stop_clean_up
          @do_clean_up = false
-      end
-
-      def load(dmp)
-        n = 0
-        h = Marshal.load(dmp)
-        h.each_pair{ |k, v|
-          # remort data
-          r_vn, r_last, r_clk, r_expt = unpack_header(v)
-          raise "An invalid vnode number is include.key=#{k} vn=#{r_vn}" unless @hdiv.key?(r_vn)
-          local = @hdb[@hdiv[r_vn]].get(k)
-          if local == nil
-            n += 1
-            @hdb[@hdiv[r_vn]].put(k, v)
-          else
-            # local data
-            l_vn, l_last, l_clk, l_expt = unpack_data(local)
-            if r_last - l_last < @logic_clock_expire && cmp_clk(r_clk,l_clk) <= 0
-            else # remort is newer.
-              n += 1
-              @hdb[@hdiv[r_vn]].put(k, v)
-            end
-          end
-          sleep @each_vn_dump_sleep
-        }
-        n
       end
 
       def load_stream_dump(vn, last, clk, expt, k, v)
@@ -496,7 +432,7 @@ module Roma
       private :each_hdb_dump
 
       # Create vnode dump.
-      def get_vnode_hash(vn)
+      def get_vnode_hash vn
         buf = {}
         count = 0
         @hdb[@hdiv[vn]].each{ |k, v|
