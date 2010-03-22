@@ -15,13 +15,12 @@ import org.slf4j.LoggerFactory;
 
 public class HandlerImpl2 extends HandlerBase {
 
-    private static Logger LOG =
-        LoggerFactory.getLogger(HandlerImpl2.class);
+    private static Logger LOG = LoggerFactory.getLogger(HandlerImpl2.class);
 
-    class ReceiverTaskImpl implements Runnable {
+    class CommandTaskImpl implements Runnable {
         private Receiver receiver;
 
-        public ReceiverTaskImpl(Receiver receiver) {
+        public CommandTaskImpl(Receiver receiver) {
             this.receiver = receiver;
         }
 
@@ -29,24 +28,27 @@ public class HandlerImpl2 extends HandlerBase {
             while (true) {
                 try {
                     String commandLine = receiver.blockingReadLine();
-                    // System.out.println("command line: " + commandLine);
+                    System.out.println("command: " + commandLine);
                     receiver.setCommands(commandLine);
-                    receiver.execCommand();
+                    while (true) {
+                        int ecode = receiver.execCommand();
+                        if (ecode < 0) {
+                            continue;
+                        }
+                    }
                 } catch (Exception e) {
-                    LOG.error("001", e);
+                    LOG.error("Trap a command signal", e);
+                    break;
                 }
             }
         }
     }
 
-    private int receiverExecutorNumber;
-
     private ExecutorService receiverExecutor;
 
     public HandlerImpl2(final String hostName, final int port,
             final ConnectionPoolFactory connPoolFactory,
-            final ConnectionFactory connFactory)
-            throws IOException {
+            final ConnectionFactory connFactory) throws IOException {
         this.hostName = hostName;
         this.port = port;
         initConnectionPool(connPoolFactory, connFactory);
@@ -55,9 +57,7 @@ public class HandlerImpl2 extends HandlerBase {
     @Override
     public void init() throws IOException {
         super.init();
-        this.receiverExecutorNumber = 100;
-        receiverExecutor = Executors.newFixedThreadPool(receiverExecutorNumber);
-        // receiverExecutor = Executors.newCachedThreadPool();
+        receiverExecutor = Executors.newCachedThreadPool();
     }
 
     @Override
@@ -101,7 +101,7 @@ public class HandlerImpl2 extends HandlerBase {
             }
             Receiver receiver = createReceiver(channel);
             LOG.info("open connection: " + channel);
-            receiverExecutor.execute(new ReceiverTaskImpl(receiver));
+            receiverExecutor.execute(new CommandTaskImpl(receiver));
         }
     }
 

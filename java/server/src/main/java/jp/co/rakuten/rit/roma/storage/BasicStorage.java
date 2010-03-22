@@ -42,13 +42,13 @@ public class BasicStorage extends AbstractStorage {
         return logicalClockExpireTime;
     }
 
-    public void open() throws StorageException {
+    public void openDataStores() throws StorageException {
         createStoragePath();
         createVirtualNodeIDMap();
         createDataStores();
     }
 
-    public void close() throws StorageException {
+    public void closeDataStores() throws StorageException {
         for (int i = 0; i < getDivisionNumber(); ++i) {
             DataStore ds = getDataStoreFromIndex(i);
             ds.close();

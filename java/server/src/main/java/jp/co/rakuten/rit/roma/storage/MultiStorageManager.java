@@ -18,12 +18,12 @@ public class MultiStorageManager {
         storages = new HashMap<String, BasicStorage>();
     }
 
-    public void open() throws StorageException {
+    public void openDataStore() throws StorageException {
         LOG.info("start a MultiStorageManager service");
         Iterator<BasicStorage> storageIter = storages.values().iterator();
         while (storageIter.hasNext()) {
             BasicStorage storage = storageIter.next();
-            storage.open();
+            storage.openDataStores();
         }
     }
 
@@ -32,7 +32,7 @@ public class MultiStorageManager {
         Iterator<BasicStorage> storageIter = storages.values().iterator();
         while (storageIter.hasNext()) {
             BasicStorage storage = storageIter.next();
-            storage.close();
+            storage.closeDataStores();
         }
     }
 

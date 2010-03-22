@@ -128,9 +128,9 @@ public class NetSpyMemcachedTest {
                 throw e;
             }
 
-            if (!v.equals(v2)) {
-                System.out.println("key: " + k + ", v1: " + v + ", v2: " + v2);
-            }
+//            if (!v.equals(v2)) {
+//                System.out.println("key: " + k + ", v1: " + v + ", v2: " + v2);
+//            }
             // System.out.println("get: k: " + k);
             // Thread.sleep(1);
         }
@@ -154,7 +154,7 @@ public class NetSpyMemcachedTest {
             memc = new MemcachedClient(cf, addresses);
 
             // t.big_loop(1, memc);
-            t.big_loop(1, null);
+            t.big_loop(10, null);
 
             while (true) {
                 Thread.sleep(5 * 1000);

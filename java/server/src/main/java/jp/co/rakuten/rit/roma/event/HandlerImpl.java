@@ -106,7 +106,7 @@ public class HandlerImpl extends HandlerBase {
         // commandProcessorExecutor = Executors.newCachedThreadPool();
         reregisterChannels = new LinkedList<ReregisterChannel>();
         receiverPool = Collections
-                .synchronizedMap(new HashMap<String, Receiver>());
+        .synchronizedMap(new HashMap<String, Receiver>());
     }
 
     @Override

@@ -146,11 +146,11 @@ module Roma
       private :cmp_clk
 
       def opendb
-        open
+        openDataStores
       end
 
       def closedb
-        close
+        closeDataStores
       end
 
       def get_context vn, key, d
@@ -305,7 +305,7 @@ module Roma
           end
         end
 
-        e3 = createDataEntry key, vn, last, clk, expt, v
+        e3 = createDataEntry key, vn, last, clk, expt, v.to_java_bytes
         if expt == 0
           if execSetCommand e3
             return [vn, last, clk, expt, v]
@@ -335,11 +335,9 @@ module Roma
           end
           pbuf << '/'
         }
-        getDivisionNumber.times { |i|
-          f = open "#{path}/#{i}.dump", "wb"
-          each_hdb_dump(i, except_vnh){ |data|
-            f.write(data)
-          }
+        divnum.times { |i|
+          f = open("#{path}/#{i}.dump", "wb")
+          each_hdb_dump(i, except_vnh){ |data| f.write(data) }
           f.close
         }
         open("#{path}/eod","w"){ |f|

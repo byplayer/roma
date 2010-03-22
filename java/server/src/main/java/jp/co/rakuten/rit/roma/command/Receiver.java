@@ -136,7 +136,7 @@ public class Receiver {
             } else {
                 return -1;
             }
-        } else { // e.g. balse
+        } else { // e.g. get, balse
             return execCommand0(commands);
         }
     }
@@ -144,7 +144,7 @@ public class Receiver {
     private int execCommand0(String[] commands) throws Exception {
         String commandName = commands[0].toLowerCase();
         Command command = handler.getJavaCommandMap(commandName);
-        Object ret;
+        Object ret = null;
         if (command != null) {
             ret = command.execute(this, commands);
         } else {
@@ -163,13 +163,15 @@ public class Receiver {
             execSetCommand(commands);
         } else if (command.equals("get")) {
             execGetCommand(commands);
+        } else if (command.equals("quit")) {
+            execQuitCommand(commands);
         } else if (command.equals("balse")) {
             execBalseCommand(commands);
         } else {
             execErrorCommand(commands);
             // throw new RuntimeException("Command not found");
         }
-        return null;
+        return new Integer(0);
     }
 
     public void execSetCommand(String[] commands) throws IOException {
@@ -200,6 +202,10 @@ public class Receiver {
         }
         sb.append("END\r\n");
         writeString(sb.toString());
+    }
+
+    public void execQuitCommand(String[] commands) throws IOException {
+        closeSilently();
     }
 
     public void execBalseCommand(String[] commands) throws IOException {

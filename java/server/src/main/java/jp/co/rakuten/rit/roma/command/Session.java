@@ -30,7 +30,8 @@ public class Session {
         tmpBuf = ByteBuffer.allocate(TMP_BUF_SIZE);
         commands = null;
         try {
-            out = new BufferedOutputStream(getSocketChannel().socket().getOutputStream());
+            out = new BufferedOutputStream(getSocketChannel().socket()
+                    .getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -106,7 +107,8 @@ public class Session {
                 len++;
             }
         }
-        return bufferToString(buf, len);
+        String ret = bufferToString(buf, len);
+        return ret;
     }
 
     public String gets() throws IOException {

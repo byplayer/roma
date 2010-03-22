@@ -24,6 +24,29 @@ def daemonize
 end
 
 Roma::Romad.class_eval {
+  def initialize_plugin
+    return unless Roma::Config.const_defined? :PLUGIN_FILES
+
+    Roma::Config::PLUGIN_FILES.each do|f|
+      ext = File.extname f
+      if ext == '.rb'
+        require "roma/plugin/#{f}"
+        @log.info "roma/plugin/#{f} loaded"
+        len = Roma::CommandPlugin.plugins_size
+        len.times { |i|
+          plugin = Roma::CommandPlugin.plugins_shift
+          Roma::Config::HANDLER_CLASS::receiver_class.class_eval do
+            include plugin
+          end
+          @log.info "#{i}, #{plugin.to_s} included"
+        }
+      elsif ext == '.jar'
+        @log.info("roma/plugin/#{f} loadedn")
+      else
+        @log.info("roma/plugin/#{f} cannot loaded")
+      end
+    end
+  end
 }
 
 $roma = Roma::Romad.new(ARGV)

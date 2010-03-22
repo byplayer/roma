@@ -143,7 +143,7 @@ public abstract class AbstractStorage {
         }
     }
 
-    public abstract void open() throws StorageException;
+    public abstract void openDataStores() throws StorageException;
 
     public void createVirtualNodeIDMap() {
         virtualNodeIDMap = new HashMap<Long, Integer>();
@@ -205,7 +205,7 @@ public abstract class AbstractStorage {
         }
     }
 
-    public abstract void close() throws StorageException;
+    public abstract void closeDataStores() throws StorageException;
 
     public DataEntry createDataEntry(String key, long vnodeID, long pClock,
             long lClock, long expire, byte[] value) {
