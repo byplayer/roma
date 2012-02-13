@@ -4,6 +4,7 @@ require 'roma/storage/tc_storage'
 require 'roma/storage/dbm_storage'
 require 'roma/storage/rh_storage'
 require 'roma/storage/sqlite3_storage'
+# require 'roma/storage/leveldb_storage'
 
 class TCStorageTest < Test::Unit::TestCase
   
@@ -23,9 +24,27 @@ class TCStorageTest < Test::Unit::TestCase
   end
 
   def rmtestdir(dirname)
-    if File::directory?(dirname)
-      File.delete(*Dir["#{dirname}/*"])
-      Dir.rmdir(dirname)
+    if File::exists?(dirname) then
+      if File::directory?(dirname) then
+        dirlist = Dir::glob(dirname + "**/").sort {
+          |a,b| b.split('/').size <=> a.split('/').size
+        }
+        dirlist.each {|d|
+          Dir::foreach(d) {|f|
+            if ! (/\.+$/ =~ f) then
+              if File::directory?(d+f) then
+                File::delete(*Dir["#{d}#{f}/*"])
+                Dir::rmdir(d+f)
+              else
+                File::delete(d+f)
+              end
+            end
+          }
+        }
+        Dir::rmdir(dirname)
+      else
+        File::delete(dirname)
+      end
     end
   end
 
@@ -638,3 +657,15 @@ class TCMemStorageTest < TCStorageTest
     @st.opendb
   end
 end
+
+=begin
+class LeveldbStorageTest < TCStorageTest
+  def setup
+    rmtestdir('storage_test')
+    @st=Roma::Storage::LeveldbStorage.new
+    @st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @st.storage_path = 'storage_test'
+    @st.opendb
+  end
+end
+=end
