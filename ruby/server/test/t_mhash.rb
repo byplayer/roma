@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+require File.expand_path('t_rclient', File.dirname(__FILE__))
 require 'roma/client/rclient'
 require 'roma/messaging/con_pool'
 require 'roma/config'
