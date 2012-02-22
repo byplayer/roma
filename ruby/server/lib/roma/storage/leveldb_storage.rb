@@ -4,7 +4,7 @@ require 'roma/storage/basic_storage'
 module Roma
   module Storage
 
-    class LeveldbStorage < BasicStorage
+    class LevelDBStorage < BasicStorage
       include LevelDB
       
       class LevelDB::DB

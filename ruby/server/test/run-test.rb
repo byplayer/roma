@@ -12,13 +12,6 @@ $LOAD_PATH.unshift("#{client_base_path}/roma-ruby-client/lib")
 
 require 'roma-test-utils'
 
-if ARGV.length == 0
-  Dir["#{base_path}/server/test/t_*.rb"].each do |test_file|
-    require File.basename(test_file, '*.rb')
-  end
-else
-  ARGV.each do |f|
-    require f
-  end
+Dir["#{base_path}/server/test/t_*.rb"].each do |test_file|
+  require File.basename(test_file, '*.rb')
 end
-
