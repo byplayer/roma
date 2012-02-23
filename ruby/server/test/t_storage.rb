@@ -4,10 +4,9 @@ require 'roma/storage/tc_storage'
 require 'roma/storage/dbm_storage'
 require 'roma/storage/rh_storage'
 require 'roma/storage/sqlite3_storage'
-# require 'roma/storage/leveldb_storage'
 
 class TCStorageTest < Test::Unit::TestCase
-  
+
   def initialize(arg)
     super(arg)
     @ndat=1000
@@ -658,14 +657,3 @@ class TCMemStorageTest < TCStorageTest
   end
 end
 
-=begin
-class LeveldbStorageTest < TCStorageTest
-  def setup
-    rmtestdir('storage_test')
-    @st=Roma::Storage::LeveldbStorage.new
-    @st.vn_list = [0,1,2,3,4,5,6,7,8,9]
-    @st.storage_path = 'storage_test'
-    @st.opendb
-  end
-end
-=end
