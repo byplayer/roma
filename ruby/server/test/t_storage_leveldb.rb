@@ -23,35 +23,6 @@ class LevelDBStorageTest < TCStorageTest
     rmtestdir(OPTION_TEST_DIR)
   end
 
-=begin
-  options[ :paranoid_checks ]
-    Default: false
-
-options[ :write_buffer_size ]
-    Default: 4MB
-
-options[ :max_open_files ]
-
-    Default: 1000
-
-options[ :block_cache_size ]
-    Default: nil
-
-options[ :block_size ]
-    Default: 4K
-
-options[ :block_restart_interval ]
-    Default: 16
-options[ :compression ]
-
-    LevelDB::CompressionType::SnappyCompression or LevelDB::CompressionType::NoCompression.
-
-    Default: LevelDB::CompressionType::SnappyCompression
-
-
-read option
-write option
-=end
   def test_option_paranoid_checks_defaults
     rmtestdir(OPTION_TEST_DIR)
     @option_st = Roma::Storage::LevelDBStorage.new
@@ -74,6 +45,156 @@ write option
 
     @option_st.hdb.each do |db|
       assert_equal(db.options.paranoid_checks, true)
+    end
+  end
+
+  def test_option_write_buffer_size_defaults
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.write_buffer_size, 4 * 1024 * 1024)
+    end
+  end
+
+  def test_option_write_buffer_size
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.option = "write_buffer_size=#{8*1024*1024}"
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.write_buffer_size, 8 * 1024 * 1024)
+    end
+  end
+
+  def test_option_max_open_files_defaults
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.max_open_files, 1000)
+    end
+  end
+
+  def test_option_max_open_files
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.option = "max_open_files=2500"
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.max_open_files, 2500)
+    end
+  end
+
+  def test_block_cache_size_default
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.block_cache_size, nil)
+    end
+  end
+
+  def test_block_cache_size
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.option = "block_cache_size=#{16 * 1024 * 1024}"
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.block_cache_size, 16 * 1024 * 1024)
+    end
+  end
+
+  def test_block_size_default
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.block_size, 4 * 1024)
+    end
+  end
+
+  def test_block_size
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.option = "block_size=#{1 * 1024}"
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.block_size, 1 * 1024)
+    end
+  end
+
+  def test_block_restart_interval_default
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.block_restart_interval, 16)
+    end
+  end
+
+  def test_block_restart_interval
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.option = "block_restart_interval=32"
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.block_restart_interval, 32)
+    end
+  end
+
+  def test_compression_default
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.compression, LevelDB::CompressionType::SnappyCompression)
+    end
+  end
+
+  def test_compression
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.option = "compression=NoCompression"
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.compression, LevelDB::CompressionType::NoCompression)
     end
   end
 end

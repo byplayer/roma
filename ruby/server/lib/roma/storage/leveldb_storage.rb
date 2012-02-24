@@ -108,14 +108,21 @@ module Roma
         buf.each do |equ|
           if /(\S+)\s*=\s*(\S+)/ =~ equ
             key = $1.to_sym
-            if $2 == "true"
+            val = $2
+            if key == :compression
+              if val == "NoCompression"
+                opt[key] = LevelDB::CompressionType::NoCompression
+              elsif val == "SnappyCompression"
+                opt[key] = LevelDB::CompressionType::SnappyCompression
+              end
+            elsif val == "true"
               opt[key] = true
-            elsif $2 == "false"
+            elsif val == "false"
               opt[key] = false
-            elsif $2 =~ /^[0-9]+%/
-              opt[key] = $2.to_i
+            elsif val =~ /^[0-9]+$/
+              opt[key] = val.to_i
             else
-              opt[key] = $2
+              opt[key] = val
             end
           else
             raise RuntimeError.new("Option string parse error.")
