@@ -197,5 +197,21 @@ class LevelDBStorageTest < TCStorageTest
       assert_equal(db.options.compression, LevelDB::CompressionType::NoCompression)
     end
   end
+
+  def test_option_multi
+    rmtestdir(OPTION_TEST_DIR)
+    @option_st = Roma::Storage::LevelDBStorage.new
+    @option_st.vn_list = [0,1,2,3,4,5,6,7,8,9]
+    @option_st.storage_path = OPTION_TEST_DIR
+    @option_st.option = "block_size=#{1 * 1024}#block_restart_interval=32#" +
+      "block_cache_size=#{16 * 1024 * 1024}"
+    @option_st.opendb
+
+    @option_st.hdb.each do |db|
+      assert_equal(db.options.block_size, 1 * 1024)
+      assert_equal(db.options.block_restart_interval, 32)
+      assert_equal(db.options.block_cache_size, 16 * 1024 * 1024)
+    end
+  end
 end
 

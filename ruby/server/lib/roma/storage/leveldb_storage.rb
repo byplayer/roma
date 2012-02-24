@@ -109,6 +109,7 @@ module Roma
           if /(\S+)\s*=\s*(\S+)/ =~ equ
             key = $1.to_sym
             val = $2
+
             if key == :compression
               if val == "NoCompression"
                 opt[key] = LevelDB::CompressionType::NoCompression
