@@ -2,5 +2,9 @@ source "https://rubygems.org"
 
 gemspec
 
-gem 'tokyocabinet', github: 'roma/tokyocabinet-ruby'
-gem 'codeclimate-test-reporter', "~> 1.0.0"
+gem 'tokyocabinet'
+
+group :development, :test do
+  gem 'codeclimate-test-reporter', "~> 1.0.0"
+  gem 'rake'
+end
